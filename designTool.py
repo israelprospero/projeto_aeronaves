@@ -355,6 +355,74 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     
     # Default rugosity value (smooth paint from Raymer Tab 12.5)
     rugosity = 0.634e-5
+    
+    # WING
+    Shid__S_w = D_f / (b_w * (1 - taper_w))
+    Sexp_w = (1 - Shid__S_w)*S_w
+    Swet_w = 2 * Sexp_w * (1 + tcr_w/(4 * (1 + taper_w)) * (1 + taper_w * tcr_w/tct_w))
+    
+    ## If the aircraft has slats
+    # taper_winglet = 0.21
+    # tc_winglet = 0.08
+    # Swet_w = Swet_w + 2 * ct_w**2 * (1 + taper_winglet) * (1 + tc_winglet/(4*(1 + taper_winglet)) * (1 + taper_winglet))
+    
+    Cf_w = Cf_calc(Mach, altitude, length = cm_w, rugosity = rugosity, k_lam = 0.05)
+    FF_w = FF_surface(Mach, tcr_w, tct_w, sweep_w, b_w, cr_w, ct_w, cm_w)    
+    Qw = 1    
+    CD0_w = Cf_w * FF_w * Qw * Swet_w/S_w
+    
+    # HORIZONTAL TAIL
+    Sexp_h = S_h
+    Swet_h = 2 * Sexp_h * (1 + tcr_h/(4 * (1 + taper_h)) * (1 + taper_h * tcr_h/tct_h))    
+    Cf_h = Cf_calc(Mach, altitude, length = cm_h, rugosity = rugosity, k_lam = 0.05)
+    FF_h = FF_surface(Mach, tcr_h, tct_h, sweep_h, b_h, cr_h, ct_h, cm_h)    
+    Qh = 1.04
+    CD0_h = Cf_h * FF_h * Qh * Swet_h/S_w
+    
+    # VERTICAL TAIL
+    Sexp_v = S_v
+    Swet_v = 2 * Sexp_v * (1 + tcr_v/(4 * (1 + taper_v)) * (1 + taper_v * tcr_v/tct_v))
+    Cf_v = Cf_calc(Mach, altitude, length = cm_v, rugosity = rugosity, k_lam = 0.05)
+    FF_v = FF_surface(Mach, tcr_v, tct_v, sweep_v, 2*b_v, cr_v, ct_v, cm_v)
+    Qv = 1.04
+    CD0_v = Cf_v * FF_v * Qv * Swet_v/S_w
+    
+    # FUSELAGE
+    fitness_f = L_f/D_f
+    Swet_f = math.pi * D_f * L_f * (1 - 2/fitness_f)**(2/3) * (1 + 1/(fitness_f**2))
+    Cf_f = Cf_calc(Mach, altitude, length = L_f, rugosity = rugosity, k_lam = 0.05)
+    FF_f = 1 + 60/(fitness_f**3) + fitness_f/400
+    Qf = 1
+    CD0_f = Cf_f*FF_f*Qf*Swet_f/S_w
+    
+    # NACELLES
+    Swet_n = n_engines * math.pi * D_n * L_n
+    Cf_n = Cf_calc(Mach, altitude, length = L_n, rugosity = rugosity, k_lam = 0.05)
+    FF_n = 1 + 0.35*D_n/L_n
+    Qn = 1.2
+    CD0_n = Cf_n * FF_n * Qn * Swet_n/S_w
+    
+    # Clean Configuration
+    CD0_clean = CD0_w + CD0_h + CD0_v + CD0_f + CD0_n
+    
+    # IF THERE'S NO WINGLET
+    AR_eff = AR_w
+    
+    ## IF THERE'S WINGLET
+    # AR_eff = 1.2*AR_w
+    
+    Delta_taper = -0.357 + 0.45 * math.exp(-0.0375 * 180 * sweep_w / math.pi)
+    taper_opt = taper_w - Delta_taper
+    f_taper = 0.0524 * taper_opt**4 - 0.15 * taper_opt**3 + 0.1659*taper_opt**2 - 0.0706*taper_opt + 0.0119
+    e_theo = 1/(1 + f_taper * AR_eff)
+    
+    k_em = 1/(1 + 0.12 * Mach**6)
+    k_ef = 1 - 2*(D_f / b_w)**2
+    
+    e_clean = e_theo * k_ef * k_em * 0.873 # commercial jets only
+    
+    # Wave Drag
+    
 
 
     # Create a drag breakdown dictionary
