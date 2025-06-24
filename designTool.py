@@ -422,17 +422,118 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     e_clean = e_theo * k_ef * k_em * 0.873 # commercial jets only
     
     # Wave Drag
+    tc_avg_w = 0.25*tcr_w + 0.75*tct_w
+    sweep_50 = geo_change_sweep(0.25, 0.50, sweep_w, b_w/2, cr_w, ct_w)
+    Mdd = k_korn/math.cos(sweep_50) - tc_avg_w/((math.cos(sweep_50)**2)) - CL/(10*(math.cos(sweep_50))**3)
+    Mc = Mdd - (0.1/80)**(1/3)
+    CD_wave = 20*(max(0, M - Mc))**4
     
+    # Maximun lift coefficient and high lift devices
+    CL_max_clean = 0.9 * clmax_w * math.cos(sweep_w)
+    
+    if flap_type is not None:
+        Sflap__S_w = b_flap_b_wing * (2 - b_flap_b_wing * (1 - taper_w))/(1 + taper_w) - Shid__S_w
+    
+    if slat_type is not None:
+        Sslat__S_w = b_slat_b_wing * (2 - b_slat_b_wing * (1 - taper_w))/(1 + taper_w) - Shid__S_w
+        
+    sweep_flap = geo_change_sweep(0.25, 1-c_flap_c_wing, sweep_w, b_w/2, cr_w, ct_w)
+    
+    if flap_type == 'plain':
+        delta_cl_max_flap = 0.9
+        F_flap = 0.9
+        
+    elif flap_type == 'single slotted':
+        delta_cl_max_flap = 1.3 * (1 + c_flap_c_wing)
+        F_flap = 1
+        
+    elif flap_type == 'double slotted':
+        delta_cl_max_flap = 1.6 * (1 + c_flap_c_wing)
+        F_flap = 1.2
+        
+    elif flap_type == 'triple slotted':
+        delta_cl_max_flap = 1.9 * (1 + c_flap_c_wing)
+        F_flap = 1.5
+        
+    if delta_lift == 'clean':
+        delta_lift = 0
+    elif delta_lift == 'takeoff':
+        delta_lift = 0.75
+    elif delta_lift == 'landing':
+        delta_lift = 1
+    
+    Delta_CL_max_flap = 0.9 * delta_cl_max_flap * Sflap__S_w * math.cos(sweep_flap) * delta_lift * c_flap_c_wing/0.3
+    
+    if delta_lift == 'clean':
+        CD0_flap = 0
+        Delta_e_flap = 0
+    elif delta_lift == 'takeoff':
+        CD0_flap = (0.03 * F_flap - 0.004)/(AR_eff**0.33)
+        Delta_e_flap = -0.05
+    elif delta_lift == 'landing':
+        CD0_flap = (0.12 * F_flap)/(AR_eff**0.33)
+        Delta_e_flap = -0.1
+        
+    # Leading Edge devices (slats)
+    if slat_type is not None:
+        sweep_slat = geo_change_sweep(0.25, c_slat_c_wing, sweep_w, b_w/2, cr_w, ct_w)
+        
+        if slat_type == 'slot':
+            delta_cl_max_slat = 0.2
+            
+        elif slat_type == 'leading edge flap':
+            delta_cl_max_slat = 0.3
+            
+        elif slat_type == 'Kruger flap':
+            delta_cl_max_slat = 0.3
+            
+        elif slat_type == 'moving slat':
+            delta_cl_max_slat = 0.4 * (1 + c_flap_c_wing)
+        
+        Delta_CL_max_slat = 0.9 * delta_cl_max_slat * Sslat__S_w * math.cos(sweep_slat) * delta_lift * c_slat_c_wing/0.15
+    
+        CD0_slat = CD0_w * c_slat_c_wing * Sslat__S_w * math.cos(sweep_w) * delta_lift
+        
+    else:
+        Delta_CL_max_slat = 0
+        
+    
+    CLmax = CL_max_clean + Delta_CL_max_flap + Delta_CL_max_slat
+    
+    # Induced Drag    
+    e = e_clean + Delta_e_flap
+    K = 1/(math.pi * AR_eff * e)
+    
+    if h_ground > 0:
+        GE = 33 * (h_ground/b_w)**1.5
+        K_GE = GE/(1 + GE)
+        K = K * K_GE
+    
+    CD_ind_clean = K * CL**2
+    
+    # Additional components
+    if lg_down == 1:
+        CD0_lg = 0.02
+    
+    if n_engines_failed > 0:
+        CD0_windmill = n_engines_failed * 0.3 * math.pi/4 * D_n**2 / S_w
+        
+    # Excrescence drag and total parasite drag
+    CD0 = (CD0_clean + CD0_flap + CD0_slat + CD0_lg + CD0_windmill)/(1 - k_exc_drag)
+    CD0_exc = CD0 * k_exc_drag
+    
+    # Total Drag
+    CD = CD0 + CD_ind_clean + CD_wave
 
 
     # Create a drag breakdown dictionary
     dragDict = {'CD0_lg' : CD0_lg,
-                'CD0_wdm' : CD0_wdm,
+                'CD0_wdm' : CD0_windmill, #CD0_wdm,
                 'CD0_exc' : CD0_exc,
                 'CD0_flap' : CD0_flap,
                 'CD0_slat' : CD0_slat,
                 'CD0' : CD0,
-                'CDind_clean' : CDind_clean,
+                'CDind_clean' : CD_ind_clean, # CDind_clean,
                 'CDind_flap' : CDind_flap,
                 'CDind' : CDind,
                 'CDwave' : CDwave,
