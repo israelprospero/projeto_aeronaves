@@ -20,7 +20,6 @@ function from this module.
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import math
 
 # CONSTANTS
 ft2m = 0.3048
@@ -142,7 +141,7 @@ def geometry(airplane):
     ### ADD CODE FROM SECTION 3.1 HERE ###
     
     # 1. Wing span
-    b_w = math.sqrt(AR_w * S_w)
+    b_w = np.sqrt(AR_w * S_w)
 
     # 2. Root chord
     cr_w = (2 * S_w) / (b_w * (1 + taper_w))
@@ -154,10 +153,10 @@ def geometry(airplane):
     yt_w = b_w / 2
 
     # 5. Wing tip x-position
-    xt_w = xr_w + yt_w * math.tan(sweep_w) + (cr_w - ct_w) / 4
+    xt_w = xr_w + yt_w * np.tan(sweep_w) + (cr_w - ct_w) / 4
 
     # 6. Wing tip z-position
-    zt_w = zr_w + yt_w * math.tan(dihedral_w)
+    zt_w = zr_w + yt_w * np.tan(dihedral_w)
         
     # 7. Mean aerodynamic chord of the wing
     cm_w = (2 * cr_w / 3) * ((1 + taper_w + taper_w**2) / (1 + taper_w))
@@ -166,10 +165,10 @@ def geometry(airplane):
     ym_w = (b_w / 6) * ((1 + 2 * taper_w) / (1 + taper_w))
 
     # 9. Longitudinal position of the mean aerodynamic chord
-    xm_w = xr_w + ym_w * math.tan(sweep_w) + (cr_w - cm_w) / 4
+    xm_w = xr_w + ym_w * np.tan(sweep_w) + (cr_w - cm_w) / 4
 
     # 10. Vertical position of the mean aerodynamic chord
-    zm_w = zr_w + ym_w * math.tan(dihedral_w)
+    zm_w = zr_w + ym_w * np.tan(dihedral_w)
 
     # 11. Horizontal tail moment arm
     Lh = Lc_h * cm_w
@@ -177,7 +176,7 @@ def geometry(airplane):
     # 12. Horizontal tail area
     S_h = (S_w * cm_w * Cht) / Lh
     
-    b_h = math.sqrt(AR_h * S_h)
+    b_h = np.sqrt(AR_h * S_h)
     
     cr_h = 2*S_h/(b_h*(1 + taper_h))
     
@@ -189,21 +188,21 @@ def geometry(airplane):
     
     ym_h = b_h * (1 + 2*taper_h)/(6 * (1 + taper_h))
     
-    zm_h = zr_h + ym_h * math.tan(dihedral_h)
+    zm_h = zr_h + ym_h * np.tan(dihedral_h)
     
-    xr_h = xm_h - ym_h * math.tan(sweep_h) + (cm_h - cr_h)/4
+    xr_h = xm_h - ym_h * np.tan(sweep_h) + (cm_h - cr_h)/4
     
     yt_h = b_h/2
     
-    xt_h = xr_h + yt_h * math.tan(sweep_h) + (cr_h - ct_h)/4
+    xt_h = xr_h + yt_h * np.tan(sweep_h) + (cr_h - ct_h)/4
     
-    zt_h = zr_h + yt_h*math.tan(dihedral_h)
+    zt_h = zr_h + yt_h*np.tan(dihedral_h)
     
     L_v = Lb_v * b_w
     
     S_v = S_w*b_w * Cvt / L_v
     
-    b_v = math.sqrt(AR_v * S_v)
+    b_v = np.sqrt(AR_v * S_v)
     
     cr_v = 2*S_v/(b_v * (1 + taper_v))
     
@@ -215,11 +214,11 @@ def geometry(airplane):
     
     zm_v = zr_v + b_v * (1 + 2 * taper_v)/(3 * (1 + taper_v))
     
-    xr_v = xm_v - (zm_v - zr_v)*math.tan(sweep_v) + (cm_v - cr_v)/4
+    xr_v = xm_v - (zm_v - zr_v)*np.tan(sweep_v) + (cm_v - cr_v)/4
     
     zt_v = zr_v + b_v
     
-    xt_v = xr_v + (zt_v - zr_v)*math.tan(sweep_v) + (cr_v - ct_v)/4
+    xt_v = xr_v + (zt_v - zr_v)*np.tan(sweep_v) + (cr_v - ct_v)/4
 
 
     # Update dictionary with new results
@@ -357,18 +356,19 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     rugosity = 0.634e-5
     
     # WING
-    Shid__S_w = D_f / (b_w * (1 - taper_w))
+    Shid__S_w = D_f / (b_w * (1 + taper_w)) * (2 - D_f/b_w * (1 - taper_w))
     Sexp_w = (1 - Shid__S_w)*S_w
-    Swet_w = 2 * Sexp_w * (1 + tcr_w/(4 * (1 + taper_w)) * (1 + taper_w * tcr_w/tct_w))
+    Swet_w = 2 * Sexp_w * (1 + tcr_w/(4 * (1 + taper_w)) * (1 + taper_w * tcr_w/tct_w))    
     
-    ## If the aircraft has slats
-    # taper_winglet = 0.21
-    # tc_winglet = 0.08
-    # Swet_w = Swet_w + 2 * ct_w**2 * (1 + taper_winglet) * (1 + tc_winglet/(4*(1 + taper_winglet)) * (1 + taper_winglet))
+    # If the aircraft has winglet
+    if has_winglet:
+        taper_winglet = 0.21
+        tc_winglet = 0.08
+        Swet_w = Swet_w + 2 * ct_w**2 * (1 + taper_winglet) * (1 + tc_winglet/(4*(1 + taper_winglet)) * (1 + taper_winglet))
     
     Cf_w = Cf_calc(Mach, altitude, length = cm_w, rugosity = rugosity, k_lam = 0.05)
     FF_w = FF_surface(Mach, tcr_w, tct_w, sweep_w, b_w, cr_w, ct_w, cm_w)    
-    Qw = 1    
+    Qw = 1
     CD0_w = Cf_w * FF_w * Qw * Swet_w/S_w
     
     # HORIZONTAL TAIL
@@ -389,14 +389,14 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     
     # FUSELAGE
     fitness_f = L_f/D_f
-    Swet_f = math.pi * D_f * L_f * (1 - 2/fitness_f)**(2/3) * (1 + 1/(fitness_f**2))
+    Swet_f = np.pi * D_f * L_f * (1 - 2/fitness_f)**(2/3) * (1 + 1/(fitness_f**2))
     Cf_f = Cf_calc(Mach, altitude, length = L_f, rugosity = rugosity, k_lam = 0.05)
     FF_f = 1 + 60/(fitness_f**3) + fitness_f/400
     Qf = 1
     CD0_f = Cf_f*FF_f*Qf*Swet_f/S_w
     
     # NACELLES
-    Swet_n = n_engines * math.pi * D_n * L_n
+    Swet_n = n_engines * np.pi * D_n * L_n
     Cf_n = Cf_calc(Mach, altitude, length = L_n, rugosity = rugosity, k_lam = 0.05)
     FF_n = 1 + 0.35*D_n/L_n
     Qn = 1.2
@@ -411,7 +411,7 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     ## IF THERE'S WINGLET
     # AR_eff = 1.2*AR_w
     
-    Delta_taper = -0.357 + 0.45 * math.exp(-0.0375 * 180 * sweep_w / math.pi)
+    Delta_taper = -0.357 + 0.45 * np.exp(-0.0375 * 180 * sweep_w / np.pi)
     taper_opt = taper_w - Delta_taper
     f_taper = 0.0524 * taper_opt**4 - 0.15 * taper_opt**3 + 0.1659*taper_opt**2 - 0.0706*taper_opt + 0.0119
     e_theo = 1/(1 + f_taper * AR_eff)
@@ -424,12 +424,12 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     # Wave Drag
     tc_avg_w = 0.25*tcr_w + 0.75*tct_w
     sweep_50 = geo_change_sweep(0.25, 0.50, sweep_w, b_w/2, cr_w, ct_w)
-    Mdd = k_korn/math.cos(sweep_50) - tc_avg_w/((math.cos(sweep_50)**2)) - CL/(10*(math.cos(sweep_50))**3)
+    Mdd = k_korn/np.cos(sweep_50) - tc_avg_w/((np.cos(sweep_50)**2)) - CL/(10*(np.cos(sweep_50))**3)
     Mc = Mdd - (0.1/80)**(1/3)
-    CD_wave = 20*(max(0, M - Mc))**4
+    CD_wave = 20*(max(0, Mach - Mc))**4
     
     # Maximun lift coefficient and high lift devices
-    CL_max_clean = 0.9 * clmax_w * math.cos(sweep_w)
+    CL_max_clean = 0.9 * clmax_w * np.cos(sweep_w)
     
     if flap_type is not None:
         Sflap__S_w = b_flap_b_wing * (2 - b_flap_b_wing * (1 - taper_w))/(1 + taper_w) - Shid__S_w
@@ -455,22 +455,22 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
         delta_cl_max_flap = 1.9 * (1 + c_flap_c_wing)
         F_flap = 1.5
         
-    if delta_lift == 'clean':
+    if highlift_config == 'clean':
         delta_lift = 0
-    elif delta_lift == 'takeoff':
+    elif highlift_config == 'takeoff':
         delta_lift = 0.75
-    elif delta_lift == 'landing':
+    elif highlift_config == 'landing':
         delta_lift = 1
     
-    Delta_CL_max_flap = 0.9 * delta_cl_max_flap * Sflap__S_w * math.cos(sweep_flap) * delta_lift * c_flap_c_wing/0.3
+    Delta_CL_max_flap = 0.9 * delta_cl_max_flap * Sflap__S_w * np.cos(sweep_flap) * delta_lift * c_flap_c_wing/0.3
     
-    if delta_lift == 'clean':
+    if highlift_config == 'clean':
         CD0_flap = 0
         Delta_e_flap = 0
-    elif delta_lift == 'takeoff':
+    elif highlift_config == 'takeoff':
         CD0_flap = (0.03 * F_flap - 0.004)/(AR_eff**0.33)
         Delta_e_flap = -0.05
-    elif delta_lift == 'landing':
+    elif highlift_config == 'landing':
         CD0_flap = (0.12 * F_flap)/(AR_eff**0.33)
         Delta_e_flap = -0.1
         
@@ -490,59 +490,77 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
         elif slat_type == 'moving slat':
             delta_cl_max_slat = 0.4 * (1 + c_flap_c_wing)
         
-        Delta_CL_max_slat = 0.9 * delta_cl_max_slat * Sslat__S_w * math.cos(sweep_slat) * delta_lift * c_slat_c_wing/0.15
+        Delta_CL_max_slat = 0.9 * delta_cl_max_slat * Sslat__S_w * np.cos(sweep_slat) * delta_lift * c_slat_c_wing/0.15
     
-        CD0_slat = CD0_w * c_slat_c_wing * Sslat__S_w * math.cos(sweep_w) * delta_lift
+        CD0_slat = CD0_w * c_slat_c_wing * Sslat__S_w * np.cos(sweep_w) * delta_lift
         
     else:
         Delta_CL_max_slat = 0
+        CD0_slat = 0
         
     
     CLmax = CL_max_clean + Delta_CL_max_flap + Delta_CL_max_slat
     
     # Induced Drag    
     e = e_clean + Delta_e_flap
-    K = 1/(math.pi * AR_eff * e)
+    K = 1/(np.pi * AR_eff * e)
     
     if h_ground > 0:
         GE = 33 * (h_ground/b_w)**1.5
         K_GE = GE/(1 + GE)
         K = K * K_GE
     
-    CD_ind_clean = K * CL**2
+    CD_ind = K * CL**2
+    
+    #K_clean = 1/(np.pi * AR_eff * e_clean)
+    #CD_ind_clean = K_clean * CL**2
+    #
+    #if Delta_e_flap != 0:
+    #    K_flap = 1/(np.pi * AR_eff * Delta_e_flap)
+    #    CD_ind_flap = K_flap * CL**2
+    #else:
+    #    CD_ind_flap = 0
     
     # Additional components
     if lg_down == 1:
         CD0_lg = 0.02
+    else:
+        CD0_lg = 0
     
     if n_engines_failed > 0:
-        CD0_windmill = n_engines_failed * 0.3 * math.pi/4 * D_n**2 / S_w
+        CD0_windmill = n_engines_failed * 0.3 * np.pi/4 * D_n**2 / S_w
+    else:
+        CD0_windmill = 0
         
     # Excrescence drag and total parasite drag
     CD0 = (CD0_clean + CD0_flap + CD0_slat + CD0_lg + CD0_windmill)/(1 - k_exc_drag)
     CD0_exc = CD0 * k_exc_drag
     
     # Total Drag
-    CD = CD0 + CD_ind_clean + CD_wave
+    CD = CD0 + CD_ind + CD_wave
 
+    Swet = Swet_f + Swet_h + Swet_v + Swet_n + Swet_w
 
     # Create a drag breakdown dictionary
-    dragDict = {'CD0_lg' : CD0_lg,
-                'CD0_wdm' : CD0_windmill, #CD0_wdm,
-                'CD0_exc' : CD0_exc,
+    dragDict = {'CD': CD,
                 'CD0_flap' : CD0_flap,
                 'CD0_slat' : CD0_slat,
+                'CD0_lg' : CD0_lg,
+                'CD0_wdm' : CD0_windmill, #CD0_wdm,
+                'CD0_exc' : CD0_exc,
                 'CD0' : CD0,
-                'CDind_clean' : CD_ind_clean, # CDind_clean,
-                'CDind_flap' : CDind_flap,
-                'CDind' : CDind,
-                'CDwave' : CDwave,
-                'CLmax_clean' : CLmax_clean,
-                'deltaCLmax_flap' : deltaCLmax_flap,
-                'deltaCLmax_slat' : deltaCLmax_slat,
+                'CDind' : CD_ind,
+                'CDwave' : CD_wave,
+                'CLmax_clean' : CL_max_clean,
+                'deltaCLmax_flap' : Delta_CL_max_flap,
+                'deltaCLmax_slat' : Delta_CL_max_slat,
                 'CLmax' : CLmax,
                 'K' : K,
-                'Swet' : Swet}
+                'e' : e,
+                'Swet' : Swet
+                #'CDind_clean' : CD_ind_clean, # CDind_clean,
+                #'CDind_flap' : CD_ind_flap,
+    }
 
     if method == 2:
         dragDict['CD0_w'] = CD0_w
