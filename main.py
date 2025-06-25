@@ -10,7 +10,7 @@ pi = np.pi
 
 # AIRPLANE 1
 print('==============================')
-print('AIRPLANE 1')
+print('AIRPLANE 1 (CL = 0.5)')
 print('==============================')
 airplane_1 = dt.standard_airplane('my_airplane_1')
 dt.geometry(airplane_1)
@@ -38,10 +38,9 @@ print('LANDING: \n' + pprint.pformat(dragDict_landing))
 print('==============================')
 
 
-
 # AIRPLANE 2
 print('==============================')
-print('AIRPLANE 2')
+print('AIRPLANE 2 (CL = 0.5)')
 print('==============================')
 airplane_2 = dt.standard_airplane('my_airplane_2')
 dt.geometry(airplane_2)
