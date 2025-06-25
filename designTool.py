@@ -253,7 +253,7 @@ def geometry(airplane):
     airplane['ct_v'] = ct_v
     airplane['xm_v'] = xm_v
     airplane['zm_v'] = zm_v
-    airplane['cm_v'] = cm_v
+    airplane['cm_v'] = cm_v    
 
     # All variables are stored in the dictionary.
     # There is no need to return anything
@@ -356,7 +356,7 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     rugosity = 0.634e-5
     
     # WING
-    Shid__S_w = D_f / (b_w * (1 + taper_w)) * (2 - D_f/b_w * (1 - taper_w))
+    Shid__S_w = D_f/(b_w * (1 + taper_w)) * (2 - D_f/b_w * (1 - taper_w))
     Sexp_w = (1 - Shid__S_w)*S_w
     Swet_w = 2 * Sexp_w * (1 + tcr_w/(4 * (1 + taper_w)) * (1 + taper_w * tcr_w/tct_w))    
     
@@ -366,8 +366,8 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
         tc_winglet = 0.08
         Swet_w = Swet_w + 2 * ct_w**2 * (1 + taper_winglet) * (1 + tc_winglet/(4*(1 + taper_winglet)) * (1 + taper_winglet))
     
-    Cf_w = Cf_calc(Mach, altitude, length = cm_w, rugosity = rugosity, k_lam = 0.05)
-    FF_w = FF_surface(Mach, tcr_w, tct_w, sweep_w, b_w, cr_w, ct_w, cm_w)    
+    Cf_w = Cf_calc(Mach=Mach, altitude=altitude, length = cm_w, rugosity = rugosity, k_lam = 0.05)
+    FF_w = FF_surface(Mach, tcr= tcr_w, tct= tct_w, sweep= sweep_w, b= b_w, cr= cr_w, ct= ct_w)    
     Qw = 1
     CD0_w = Cf_w * FF_w * Qw * Swet_w/S_w
     
@@ -375,7 +375,7 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     Sexp_h = S_h
     Swet_h = 2 * Sexp_h * (1 + tcr_h/(4 * (1 + taper_h)) * (1 + taper_h * tcr_h/tct_h))    
     Cf_h = Cf_calc(Mach, altitude, length = cm_h, rugosity = rugosity, k_lam = 0.05)
-    FF_h = FF_surface(Mach, tcr_h, tct_h, sweep_h, b_h, cr_h, ct_h, cm_h)    
+    FF_h = FF_surface(Mach, tcr_h, tct_h, sweep_h, b_h, cr_h, ct_h)    
     Qh = 1.04
     CD0_h = Cf_h * FF_h * Qh * Swet_h/S_w
     
@@ -383,7 +383,7 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     Sexp_v = S_v
     Swet_v = 2 * Sexp_v * (1 + tcr_v/(4 * (1 + taper_v)) * (1 + taper_v * tcr_v/tct_v))
     Cf_v = Cf_calc(Mach, altitude, length = cm_v, rugosity = rugosity, k_lam = 0.05)
-    FF_v = FF_surface(Mach, tcr_v, tct_v, sweep_v, 2*b_v, cr_v, ct_v, cm_v)
+    FF_v = FF_surface(Mach, tcr_v, tct_v, sweep_v, 2*b_v, cr_v, ct_v)
     Qv = 1.04
     CD0_v = Cf_v * FF_v * Qv * Swet_v/S_w
     
@@ -1269,7 +1269,7 @@ def FF_surface(Mach, tcr, tct, sweep, b, cr, ct, x_c_max_tc=0.4):
     '''
 
     # Average chord fraction
-    t_c = (tcr + tct)/2
+    t_c = 0.25*tcr + 0.75*tct
 
     # Sweep at maximum thickness position
     sweep_maxtc=geo_change_sweep(0.25, x_c_max_tc, sweep, b/2, cr, ct)

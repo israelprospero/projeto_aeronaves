@@ -7,17 +7,12 @@ ft2m = dt.ft2m
 nm2m = dt.nm2m
 pi = np.pi
 
-# You have two options to define inputs.
-# 1. Load a sample case already defined in designTools.py:
-airplane = dt.standard_airplane('fokker100')
+# geometry() TEST
+#airplane = dt.standard_airplane('fokker100')
+#dt.geometry(airplane)
+#print(pprint.pformat(airplane))
 
-# 2. Load another aircraft with student-defined data
-# (uncomment the line below and change the dictionary parameters within designTools.py)
-# airplane = dt.standard_airplane('my_airplane_2')
-
-# Execute the geometry function
-# dt.geometry(airplane)
-
+# aerodynamics() TEST
 inputs = {
 'S_w' : 93.5, # Wing area [m2] - From Obert's paper
 'AR_w' : 8.32, # Wing aspect ratio
@@ -111,10 +106,7 @@ inputs = {
 
 # Cruise
 dt.geometry(inputs)
-_, _, dragDict =dt.aerodynamics(inputs, Mach=0.73, altitude=10668, CL=0.5, W0_guess=inputs['W0_guess'], n_engines_failed=0, highlift_config='clean', lg_down=0, h_ground=0)
-
-# Print updated dictionary
-#print('airplane = ' + pprint.pformat(airplane))
+_, _, dragDict = dt.aerodynamics(inputs, Mach=0.73, altitude=10668, CL=0.5, W0_guess=inputs['W0_guess'], n_engines_failed=0, highlift_config='clean', lg_down=0, h_ground=0)
 print(pprint.pformat(dragDict))
 
 # Generate 3D plot
