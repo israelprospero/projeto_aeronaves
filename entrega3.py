@@ -56,6 +56,7 @@ for M1 in np.arange(0.6, 0.9, 0.001):
     CD1, _, _ = dt.aerodynamics(airplane_1, M1, H1, CL1_cruise, airplane_1['W0_guess'])
     CD1_list.append(CD1)
 
+plt.figure()
 plt.plot(M1_list, CD1_list)
 plt.xlabel('M')
 plt.ylabel('CD')
@@ -96,7 +97,7 @@ _, CLmax_cruise, _ = dt.aerodynamics(airplane_1, 0.8, 10000, 0.5, airplane_1['W0
 _, CLmax_takeoff, _ = dt.aerodynamics(airplane_1, 0.3, 0, 0.5, airplane_1['W0_guess'], highlift_config='takeoff')
 _, CLmax_landing, _ = dt.aerodynamics(airplane_1, 0.35, 0, 0.5, airplane_1['W0_guess'], highlift_config='landing')
 
-print(f"\nCLmax (Airplane 1):")
+print("\nCLmax (Airplane 1):")
 print(f"Cruise  : {CLmax_cruise:.3f}")
 print(f"Takeoff : {CLmax_takeoff:.3f}")
 print(f"Landing : {CLmax_landing:.3f}")
@@ -142,6 +143,26 @@ print(f"Cruise  : {V_stall_cruise:.2f} m/s")
 print(f"Takeoff : {V_stall_takeoff:.2f} m/s")
 print(f"Landing : {V_stall_landing:.2f} m/s")
 
+# === Eficiência aerodinâmica máxima em cruzeiro (Airplane 1) ===
+M = 0.8
+H = 10000  # m
+
+CL_list = []
+LD_list = []
+
+for CL in np.arange(0.1, 2.5, 0.001):  # evita valores muito baixos de CL
+    CD, _, _ = dt.aerodynamics(airplane_1, M, H, CL, airplane_1['W0_guess'], highlift_config='clean')
+    LD = CL / CD
+    CL_list.append(CL)
+    LD_list.append(LD)
+
+LD_max = max(LD_list)
+CL_LDmax = CL_list[np.argmax(LD_list)]
+CD_LDmax, _, _ = dt.aerodynamics(airplane_1, M, H, CL_LDmax, airplane_1['W0_guess'], highlift_config='clean')
+
+print(f"\nEficiência aerodinâmica máxima (Airplane 1 - Cruzeiro):")
+print(f"(L/D)_max = {LD_max:.2f} para CL = {CL_LDmax:.3f} e CD = {CD_LDmax:.4f}")
+
 # =============================================== #
 # AIRPLANE 2 (com mesmo processo)
 # =============================================== #
@@ -156,13 +177,11 @@ MTOW2 = airplane_2['W0_guess']
 # Cruise
 CL_cruise_list = []
 CD_cruise_list = []
-L_D_list = list()
+
 for CL in np.arange(-0.5, 3.0, 0.001):
     CL_cruise_list.append(CL)
     CD, _, _ = dt.aerodynamics(airplane_2, 0.8, 10000, CL, airplane_2['W0_guess'], highlift_config='clean')
     CD_cruise_list.append(CD)
-    L_D_list.append(CL/CD)
-
 # Takeoff
 CL_takeoff_list = []
 CD_takeoff_list = []
@@ -226,26 +245,6 @@ print(f"\nVelocidades de Estol (Airplane 2):")
 print(f"Cruise  : {V_stall_cruise2:.2f} m/s")
 print(f"Takeoff : {V_stall_takeoff2:.2f} m/s")
 print(f"Landing : {V_stall_landing2:.2f} m/s")
-
-# === Eficiência aerodinâmica máxima em cruzeiro (Airplane 1) ===
-M = 0.8
-H = 10000  # m
-
-CL_list = []
-LD_list = []
-
-for CL in np.arange(0.1, 2.5, 0.001):  # evita valores muito baixos de CL
-    CD, _, _ = dt.aerodynamics(airplane_1, M, H, CL, airplane_1['W0_guess'], highlift_config='clean')
-    LD = CL / CD
-    CL_list.append(CL)
-    LD_list.append(LD)
-
-LD_max = max(LD_list)
-CL_LDmax = CL_list[np.argmax(LD_list)]
-CD_LDmax, _, _ = dt.aerodynamics(airplane_1, M, H, CL_LDmax, airplane_1['W0_guess'], highlift_config='clean')
-
-print(f"\nEficiência aerodinâmica máxima (Airplane 1 - Cruzeiro):")
-print(f"(L/D)_max = {LD_max:.2f} para CL = {CL_LDmax:.3f} e CD = {CD_LDmax:.4f}")
 
       
 # === Eficiência aerodinâmica máxima em cruzeiro (Airplane 2) ===
