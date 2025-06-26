@@ -130,7 +130,7 @@ for i, airplane in enumerate([airplane_1, airplane_2], start=1):
     for label, conf, color in zip(labels, configs, colors):
         CL_list = []
         CD_list = []
-        for CL in np.arange(0.1, 3.0, 0.001):
+        for CL in np.arange(-0.5, 3.0, 0.001):
             CD, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL, airplane['W0_guess'],
                                         highlift_config=conf['config'],
                                         n_engines_failed=1 if conf['config']=='takeoff' else 0,
@@ -141,10 +141,18 @@ for i, airplane in enumerate([airplane_1, airplane_2], start=1):
         _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, airplane['W0_guess'], highlift_config=conf['config'])
         mask = np.array(CL_list) <= CLmax
         plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], label=label)
+        
+        if label == 'Cruise':
+            if i == 1:
+                plt.plot(CD1, CL1_cruise_08, 'ks', label='Cruise Point A1')
+                plt.text(CD1, CL1_cruise_08 - 0.1, "Cruise pt (A1)", color='black')
+            elif i == 2:
+                plt.plot(CD2, CL2_cruise_08, 'ks', label='Cruise Point A2')
+                plt.text(CD2, CL2_cruise_08 - 0.1, "Cruise pt (A2)", color='black')
 
         CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, airplane['W0_guess'], highlift_config=conf['config'])
-        plt.plot(CD_clmax, CLmax, 'o', color=color)
-        plt.text(CD_clmax, CLmax + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color)
+        plt.plot(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1], 'o', color=color)
+        plt.text(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1] + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color)
 
     plt.xlabel("CD")
     plt.ylabel("CL")
@@ -171,7 +179,7 @@ for i, (airplane, CLmax_vals, MTOW) in enumerate([
     # L/D max
     CL_list = []
     LD_list = []
-    for CL in np.arange(0.1, 2.5, 0.001):
+    for CL in np.arange(-0.5, 2.5, 0.001):
         CD, _, _ = dt.aerodynamics(airplane, 0.8, 10000, CL, airplane['W0_guess'], highlift_config='clean')
         LD_list.append(CL / CD)
         CL_list.append(CL)
