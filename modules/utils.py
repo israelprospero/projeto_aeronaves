@@ -9,6 +9,21 @@ def CL_max(airplane):
     
     return 0.9*airplane['clmax_w']*np.cos(airplane['sweep_w'])
 
+def LD_max(airplane, CL_range, M, H):
+            
+    # L/D max
+    CL_list = []
+    LD_list = []
+    for CL in CL_range:
+        CD, _, _ = dt.aerodynamics(airplane, M, H, CL, airplane['W0_guess'], highlift_config='clean') # TODO: check arguments
+        LD_list.append(CL / CD)
+        CL_list.append(CL)
+
+    LD_max = max(LD_list)
+    CL_LDmax = CL_list[np.argmax(LD_list)]
+    CD_LDmax, _, _ = dt.aerodynamics(airplane, 0.8, 10000, CL_LDmax, airplane['W0_guess'], highlift_config='clean')
+    print(f"(L/D)_max = {LD_max:.2f} at CL = {CL_LDmax:.2f}, CD = {CD_LDmax:.4f}")
+
 def drag_polar(airplane, CL_cruise, num):
     
     labels = ['Cruise', 'Takeoff', 'Landing']
@@ -31,8 +46,10 @@ def drag_polar(airplane, CL_cruise, num):
             CL_list.append(CL)
             CD_list.append(CD)
 
-        CLmax = CL_max(airplane)
-        # _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, airplane['W0_guess'], highlift_config=conf['config'])
+        # TODO: check which one to use
+        # CLmax = CL_max(airplane) # ?
+        _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, airplane['W0_guess'], highlift_config=conf['config'])
+        
         mask = np.array(CL_list) <= CLmax
         plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], label=label)
         

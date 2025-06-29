@@ -22,15 +22,16 @@ dt.geometry(airplane_1)
 # ------ CL - Cruise ------ #
 M1 = 0.8
 H1 = 10000  # m
-MTOW1 = airplane_1['W0_guess']
 V1 = M1 * a
+
+MTOW1 = airplane_1['W0_guess']
 rho1 = dt.atmosphere(H1)[2]
 CL1_cruise = 0.95 * MTOW1 / (0.5 * rho1 * V1**2 * airplane_1['S_w'])
 
 print(f'CL (cruise): {CL1_cruise}')
 
 CD1_cruise, _, dragDict1 = dt.aerodynamics(airplane_1, M1, H1, CL1_cruise, airplane_1['W0_guess'])
-# print(pprint.pformat(dragDict1))
+print(pprint.pformat(dragDict1))
 
 m.print_drag_table(CD1_cruise, dragDict1)
 
@@ -41,6 +42,15 @@ m.plot_CD_x_M(M1_range, H1, CL1_cruise, airplane_1, '1')
 
 # Drag Polar
 m.drag_polar(airplane_1, CL1_cruise, '1')
+
+## Aerodynamic Efficiency (LD)
+
+# LD Max
+# M = ?
+# H = ?
+
+# LD Cruise
+
 
 # ------------------------------------------------------------ #
 # ------------------- AIRPLANE 2 ----------------------------- #
@@ -62,7 +72,7 @@ CL2_cruise = 0.95 * MTOW2 / (0.5 * rho2 * V2**2 * airplane_2['S_w'])
 print(f'CL (cruise): {CL2_cruise}')
 
 CD2_cruise, _, dragDict2 = dt.aerodynamics(airplane_2, M2, H2, CL2_cruise, airplane_2['W0_guess'])
-# print(pprint.pformat(dragDict1))
+print(pprint.pformat(dragDict2))
 
 m.print_drag_table(CD2_cruise, dragDict2)
 
@@ -73,3 +83,11 @@ m.plot_CD_x_M(M1_range, H2, CL2_cruise, airplane_2, '2')
 
 # Drag Polar
 m.drag_polar(airplane_2, CL2_cruise, '2')
+
+## Aerodynamic Efficiency (LD)
+
+# LD Max
+# M = ?
+# H = ?
+
+# LD Cruise
