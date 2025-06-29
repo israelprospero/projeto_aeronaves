@@ -46,10 +46,9 @@ m.drag_polar(airplane_1, CL1_cruise, '1')
 ## Aerodynamic Efficiency (LD)
 
 # LD Max
-# M = ?
-# H = ?
 
 # LD Cruise
+LD_cruise = CL1_cruise/CD1_cruise
 
 
 # ------------------------------------------------------------ #
