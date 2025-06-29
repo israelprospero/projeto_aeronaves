@@ -1,4 +1,4 @@
-import designTool as dt
+import modules.designTool as dt
 import numpy as np
 import pprint
 
