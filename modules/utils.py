@@ -3,19 +3,40 @@ import modules.designTool as dt
 import numpy as np
 from tabulate import tabulate
 
-a = 331.3  # m/s^2
+# TODO: alterar!!!
+H1 = 10000
+H2 = 10000
 
-def CL_max(airplane):
+def get_a(H):
+    # dt.atmosphere(H) retorna temperatura em °C, pressão, densidade, viscosidade
+    T_C = dt.atmosphere(H)[0]
+    T_K = T_C + 273.15   
+    gamma = 1.4          
+    R = 287.05           
+    return np.sqrt(gamma * R * T_K)
+
+
+def get_Mach_stall(airplane, W, config='takeoff', altitude=0):
+    rho = dt.atmosphere(altitude)[2]       
+    S = airplane['S_w']                    
+    a = get_a(altitude)           
+
+    Mach_chute = 3
+    _, CLmax, _ = dt.aerodynamics(airplane, Mach_chute, altitude, CL=1.2, W0_guess=W, highlift_config=config)
+    # print(CLmax)
     
-    return 0.9*airplane['clmax_w']*np.cos(airplane['sweep_w'])
+    V_stall = np.sqrt(2 * W / (rho * S * CLmax))
+    Mach_stall = V_stall / a
+    
+    return Mach_stall
 
-def LD_max(airplane, CL_range, M, H):
+def LD_max(airplane, CL_range, M, H, Weight):
             
     # L/D max
     CL_list = []
     LD_list = []
     for CL in CL_range:
-        CD, _, _ = dt.aerodynamics(airplane, M, H, CL, airplane['W0_guess'], highlift_config='clean') # TODO: check arguments
+        CD, _, _ = dt.aerodynamics(airplane, M, H, CL, Weight, highlift_config='clean') # TODO: check arguments
         LD_list.append(CL / CD)
         CL_list.append(CL)
 
@@ -27,11 +48,16 @@ def LD_max(airplane, CL_range, M, H):
 def drag_polar(airplane, CL_cruise, num):
     
     labels = ['Cruise', 'Takeoff', 'Landing']
+    
+    Mach_stall_takeoff = get_Mach_stall(airplane, airplane['W0_guess'], config='takeoff')
+    Mach_stall_landing = get_Mach_stall(airplane, airplane['W0_guess'], config='landing') # TODO: alterar peso para landing!!!
     configs = [
         {'M': 0.8, 'H': 10000, 'config': 'clean'},
-        {'M': 0.3, 'H': 0, 'config': 'takeoff'},
-        {'M': 0.35, 'H': 0, 'config': 'landing'}
+        {'M': 1.2*Mach_stall_takeoff, 'H': 0, 'config': 'takeoff'},
+        {'M': 1.3*Mach_stall_landing, 'H': 0, 'config': 'landing'}
     ]
+    
+    
     
     colors = ['blue', 'red', 'green']
     plt.figure()
@@ -46,8 +72,6 @@ def drag_polar(airplane, CL_cruise, num):
             CL_list.append(CL)
             CD_list.append(CD)
 
-        # TODO: check which one to use
-        # CLmax = CL_max(airplane) # ?
         _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, airplane['W0_guess'], highlift_config=conf['config'])
         
         mask = np.array(CL_list) <= CLmax
