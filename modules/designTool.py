@@ -1588,7 +1588,6 @@ def standard_airplane(name='fokker100'):
                     
                     'altitude_landing' : 0.0, # Altitude for landing computation [m]
                     'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
-                    'MLW_frac' : 38300/41500, # Max Landing Weight / Max Takeoff Weight
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
                     'Mach_cruise' : 0.73, # Cruise Mach number
@@ -1597,7 +1596,7 @@ def standard_airplane(name='fokker100'):
                     'loiter_time' : 45*60, # Loiter time [s]
                     
                     'altitude_altcruise' : 4572, # Alternative cruise altitude [m]
-                    'Mach_altcruise' : 0.4, # Alternative cruise Mach number
+                    'Mach_altcruise' : 0.8, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 107*91*gravity, # Payload weight [N]
@@ -1613,7 +1612,8 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 40000*gravity # Guess for MTOW
+                    'W0_guess' : 49020*gravity, # Guess for MTOW
+                    'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
         
     elif name == 'my_airplane_2':
@@ -1704,7 +1704,6 @@ def standard_airplane(name='fokker100'):
                     
                     'altitude_landing' : 0.0, # Altitude for landing computation [m]
                     'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
-                    'MLW_frac' : 38300/41500, # Max Landing Weight / Max Takeoff Weight
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
                     'Mach_cruise' : 0.73, # Cruise Mach number
@@ -1729,7 +1728,8 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 40000*gravity # Guess for MTOW
+                    'W0_guess' : 49020*gravity, # Guess for MTOW
+                    'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
     
 

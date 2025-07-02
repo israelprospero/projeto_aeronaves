@@ -3,9 +3,8 @@ import modules.designTool as dt
 import numpy as np
 from tabulate import tabulate
 
-# TODO: alterar!!!
-H1 = 10000
-H2 = 10000
+H1 = 10700
+H2 = 10700
 
 def get_a(H):
     # dt.atmosphere(H) retorna temperatura em °C, pressão, densidade, viscosidade
@@ -28,7 +27,7 @@ def get_Mach_stall(airplane, W, config='takeoff', altitude=0):
     V_stall = np.sqrt(2 * W / (rho * S * CLmax))
     Mach_stall = V_stall / a
     
-    return Mach_stall
+    return Mach_stall, CLmax
 
 def LD_max(airplane, CL_range, M, H, Weight):
             
@@ -49,8 +48,8 @@ def drag_polar(airplane, CL_cruise, num):
     
     labels = ['Cruise', 'Takeoff', 'Landing']
     
-    Mach_stall_takeoff = get_Mach_stall(airplane, airplane['W0_guess'], config='takeoff')
-    Mach_stall_landing = get_Mach_stall(airplane, airplane['W0_guess'], config='landing') # TODO: alterar peso para landing!!!
+    Mach_stall_takeoff, _ = get_Mach_stall(airplane, airplane['W0_guess'], config='takeoff')
+    Mach_stall_landing, _ = get_Mach_stall(airplane, airplane['W0_guess'], config='landing') # TODO: alterar peso para landing!!!
     configs = [
         {'M': 0.8, 'H': 10000, 'config': 'clean'},
         {'M': 1.2*Mach_stall_takeoff, 'H': 0, 'config': 'takeoff'},
