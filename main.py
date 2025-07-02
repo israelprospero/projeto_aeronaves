@@ -71,10 +71,10 @@ m.drag_polar(airplane_1, CL1_cruise, '1')
 ## Aerodynamic Efficiency (LD)
 
 # LD Max
-
-
-# LD Cruise
-# LD1_cruise = CL1_cruise/CD1_cruise
+CL1_range = np.arange(-0.5,2.9,0.001)
+m.LD_max(airplane_1, CL1_range, M1, H1,0.95 * MTOW1)
+LD1_cruise = CL1_cruise/CD1_cruise
+print(f'(L/D)_cruise = {LD1_cruise:.2f} at CL = {CL1_cruise:.2f}, CD = {CD1_cruise:.2f}\n\n')
 
 ## 
 
@@ -138,7 +138,7 @@ m.drag_polar(airplane_2, CL2_cruise, '2')
 ## Aerodynamic Efficiency (LD)
 
 # LD Max
-
-
-# LD Cruise
-# LD2_cruise = CL2_cruise/CD2_cruise
+CL2_range = np.arange(-0.5,2.9,0.001)
+m.LD_max(airplane_2, CL2_range, M2, H2,0.95 * MTOW2)
+LD2_cruise = CL2_cruise/CD2_cruise
+print(f'(L/D)_cruise = {LD2_cruise:.2f} at CL = {CL2_cruise:.2f}, CD = {CD2_cruise:.2f}')
