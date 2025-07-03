@@ -66,7 +66,7 @@ def drag_polar(airplane, CL_cruise, num):
                                         n_engines_failed=1 if conf['config']=='takeoff' else 0,
                                         lg_down=1 if conf['config']=='landing' else 0)
             CL_list.append(CL)
-            CD_list.append(CD)
+            CD_list.append(CD*1e4)
 
         _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, conf['W'], highlift_config=conf['config'])
         
@@ -79,12 +79,14 @@ def drag_polar(airplane, CL_cruise, num):
 
         CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, conf['W'], highlift_config=conf['config'])
         plt.plot(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1], 'o', color=color)
-        plt.text(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1] + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color)
+        plt.text(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1] + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color, fontsize=14)
             
-    plt.xlabel("CD")
-    plt.ylabel("CL")
+    plt.xlabel("CD",fontsize=16)
+    plt.ylabel("CL",fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.title(f"Airplane {num} - Polar Drag with CLmax")
-    plt.legend()
+    plt.legend(fontsize=14)
     plt.grid(True)
     plt.show() 
         
@@ -96,12 +98,14 @@ def plot_CD_x_M(M_range, H, CL, airplane, num):
         M_list.append(M)
 
         CD, _, _ = dt.aerodynamics(airplane, M, H, CL, 0.95*airplane['W0_guess'])
-        CD_list.append(CD)
+        CD_list.append(CD*1e4)
     
     plt.figure()
     plt.plot(M_list, CD_list)
-    plt.xlabel('M')
-    plt.ylabel('CD')
+    plt.xlabel('M',fontsize=14)
+    plt.ylabel('CD',fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.title(f'Airplane {num} - CD x M')
     plt.grid(True)
     plt.show()
