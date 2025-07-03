@@ -1475,8 +1475,8 @@ def standard_airplane(name='fokker100'):
                     'MLW_frac' : 38300/41500, # Max Landing Weight / Max Takeoff Weight
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
-                    'Mach_cruise' : 0.73, # Cruise Mach number
-                    'range_cruise' : 1200*nm2m, # Cruise range [m]
+                    'Mach_cruise' : 0.8, # Cruise Mach number
+                    'range_cruise' : 2200*nm2m, # Cruise range [m]
                     
                     'loiter_time' : 45*60, # Loiter time [s]
                     
@@ -1506,10 +1506,10 @@ def standard_airplane(name='fokker100'):
 
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
                     
-                    'S_w' : 93.581, # Wing area [m2]
-                    'AR_w' : 8.813,  # Wing aspect ratio
-                    'taper_w' : 0.25, # Wing taper ratio
-                    'sweep_w' : 25.83*np.pi/180, # Wing sweep [rad]
+                    'S_w' : 97.58, # Wing area [m2]
+                    'AR_w' : 9.57,  # Wing aspect ratio
+                    'taper_w' : 0.27, # Wing taper ratio
+                    'sweep_w' : 25.1*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.1*np.pi/180, # Wing dihedral [rad]
                     'xr_w' : 10.5, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
                     'zr_w' : -1.4, # Vertical position of the wing (with respect to the fuselage nose) [m]
@@ -1590,8 +1590,8 @@ def standard_airplane(name='fokker100'):
                     'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
-                    'Mach_cruise' : 0.73, # Cruise Mach number
-                    'range_cruise' : 1200*nm2m, # Cruise range [m]
+                    'Mach_cruise' : 0.8, # Cruise Mach number
+                    'range_cruise' : 2200*nm2m, # Cruise range [m]
                     
                     'loiter_time' : 45*60, # Loiter time [s]
                     
@@ -1599,7 +1599,7 @@ def standard_airplane(name='fokker100'):
                     'Mach_altcruise' : 0.8, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
-                    'W_payload' : 107*91*gravity, # Payload weight [N]
+                    'W_payload' : 12000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 5*91*gravity, # Crew weight [N]
@@ -1612,7 +1612,7 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 49020*gravity, # Guess for MTOW
+                    'W0_guess' : 50150*gravity, # Guess for MTOW
                     'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
         
@@ -1622,10 +1622,10 @@ def standard_airplane(name='fokker100'):
 
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
                     
-                    'S_w' : 93.581, # Wing area [m2]
-                    'AR_w' : 8.813,  # Wing aspect ratio
-                    'taper_w' : 0.2526, # Wing taper ratio
-                    'sweep_w' : 25.83*np.pi/180, # Wing sweep [rad]
+                    'S_w' : 105.58, # Wing area [m2]
+                    'AR_w' : 10.32,  # Wing aspect ratio
+                    'taper_w' : 0.25, # Wing taper ratio
+                    'sweep_w' : 26.4*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.5*np.pi/180, # Wing dihedral [rad]
                     'xr_w' : 14.35, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
                     'zr_w' : -1.3, # Vertical position of the wing (with respect to the fuselage nose) [m]
@@ -1633,12 +1633,12 @@ def standard_airplane(name='fokker100'):
                     'tct_w' : 0.096, # t/c of the tip section of the wing
                     
                     'Cht' : 0.92, # Horizontal tail volume coefficient
-                    'Lc_h' : 4.37, # Non-dimensional lever of the horizontal tail (lever/wing_mac)
+                    'Lc_h' : 5, # Non-dimensional lever of the horizontal tail (lever/wing_mac)
                     'AR_h' : 4.87, # HT aspect ratio
                     'taper_h' : 0.41, # HT taper ratio
                     'sweep_h' : 28.29*np.pi/180, # HT sweep [rad]
                     'dihedral_h' : 4.76*np.pi/180, # HT dihedral [rad]
-                    'zr_h' : 6.05, # Vertical position of the HT [m]
+                    'zr_h' : 6.35, # Vertical position of the HT [m]
                     'tcr_h' : 0.1, # t/c of the root section of the HT
                     'tct_h' : 0.1, # t/c of the tip section of the HT
                     'eta_h' : 1.0, # Dynamic pressure factor of the HT
@@ -1715,7 +1715,7 @@ def standard_airplane(name='fokker100'):
                     'Mach_altcruise' : 0.4, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
-                    'W_payload' : 107*91*gravity, # Payload weight [N]
+                    'W_payload' : 12000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 5*91*gravity, # Crew weight [N]
@@ -1728,7 +1728,7 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 49020*gravity, # Guess for MTOW
+                    'W0_guess' : 49200*gravity, # Guess for MTOW
                     'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
     
@@ -2359,6 +2359,17 @@ def plot3d(airplane, figname='3dview.png', az1=45, az2=-135):
     ax.view_init(az1, az2)
 
     fig.savefig(figname,dpi=300)
+    
+    ax.view_init(elev=90, azim=-90)
+    fig.savefig("vista_superior.png",dpi=300)
+
+    # Vista lateral (direita)
+    ax.view_init(elev=0, azim=-90)
+    fig.savefig("vista_lateral.png",dpi=300)
+
+    # Vista frontal
+    ax.view_init(elev=0, azim=0)
+    fig.savefig("vista_frontal.png",dpi=300)
 
     plt.show()
 

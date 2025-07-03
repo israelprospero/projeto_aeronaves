@@ -18,7 +18,7 @@ print('\n\n')
 
 airplane_1 = dt.standard_airplane('my_airplane_1')
 dt.geometry(airplane_1)
-# dt.plot3d(airplane_1)
+dt.plot3d(airplane_1)
 
 # ------ CL - Cruise ------ #
 M1 = 0.8
@@ -86,7 +86,7 @@ print('================ AIRPLANE 2 ===========================')
 
 airplane_2 = dt.standard_airplane('my_airplane_2')
 dt.geometry(airplane_2)
-# dt.plot3d(airplane_2)
+dt.plot3d(airplane_2)
 
 # ------ CL - Cruise ------ #
 M2 = 0.8
