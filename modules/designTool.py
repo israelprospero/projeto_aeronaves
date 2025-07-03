@@ -2361,7 +2361,7 @@ def plot3d(airplane, figname='3dview.png', az1=45, az2=-135):
     fig.savefig(figname,dpi=300)
     
     ax.view_init(elev=90, azim=-90)
-    fig.savefig("vista_superior.png",dpi=300)
+    fig.savefig(f"vista_superior.png",dpi=300)
 
     # Vista lateral (direita)
     ax.view_init(elev=0, azim=-90)

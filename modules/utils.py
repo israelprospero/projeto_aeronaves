@@ -75,6 +75,7 @@ def drag_polar(airplane, CL_cruise, num):
         
         if label == 'Cruise':
             CD_cruise, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise, conf['W'])
+            CD_cruise = CD_cruise*1e4
             plt.plot(CD_cruise, CL_cruise, 'ks', label='Cruise Point A1')
 
         CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, conf['W'], highlift_config=conf['config'])
