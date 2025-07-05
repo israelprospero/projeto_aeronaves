@@ -96,6 +96,12 @@ V2 = M2 * m.get_a(H2)
 rho2 = dt.atmosphere(H2)[2]
 CL2_cruise = 0.95 * MTOW2 / (0.5 * rho2 * V2**2 * airplane_2['S_w'])
 
+print(f'Sw = {airplane_2['S_w']}')
+print(f'rho = {rho2}')
+print(f'MTOW = {MTOW2}')
+print(f'a = {m.get_a(H2)}')
+print(f'V = {V2}')
+
 print('------------------------- \n')
 print(f'CL (cruise): {CL2_cruise}')
 print('------------------------- \n\n')

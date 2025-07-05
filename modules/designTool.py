@@ -605,10 +605,16 @@ def engineTSFC(Mach, altitude, airplane):
     The user can also leave a 'weight' field in the dictionary
     to replace the weight estimation.
     '''
-
-    # Get a reference to the engine dictionary
-    engine = airplane['engine']
-
+    
+    BPR = airplane['engine']['BPR']
+    Cbase = airplane['engine']['Cbase']
+    
+    _,_,rho,_ = atmosphere(altitude, 288.15)
+    sigma = rho/1.225
+    
+    C = Cbase*(1 - 0.15*BPR**0.65)*(1 + 0.28*(1 + 0.063*BPR**2)*Mach)*sigma**0.08
+    
+    kT = (0.0013*BPR - 0.0397)*altitude/1000 - 0.0248*BPR + 0.7125
 
     return C, kT
 
@@ -658,7 +664,71 @@ def empty_weight(W0_guess, T0_guess, airplane):
     Mach_cruise = airplane['Mach_cruise']
     
     airplane_type = airplane['type']
-
+    
+    Nz = 1.5*2.5
+    
+    if airplane['flap_type'] == 'plain':
+        m_flap = 1
+    elif airplane['flap_type'] == 'single slotted':
+        m_flap = 1.44
+    elif airplane['flap_type'] == 'double slotted':
+        m_flap = 1.63
+    elif airplane['flap_type'] == 'triple slotted':
+        m_flap = 1.81    
+    # S_____S_wing = x1           /(1 + taper_w) * (y2            * (2 - y2           *(1 - taper_w)) - y1      * (2 - y1      * (1 - taper_w))) * m    
+    S_flap__S_wing = c_flap_c_wing/(1 + taper_w) * (b_flap_b_wing * (2 - b_flap_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_flap
+    
+    if airplane['slat_type'] == None:
+        m_slat = 0
+    elif airplane['slat_type'] == 'leading edge flap':
+        m_slat = 1
+    elif airplane['slat_type'] == 'Kruger flaps':
+        m_slat = 1
+    elif airplane['slat_type'] == 'slats':
+        m_slat = 1.25   
+    # S_____S_wing = x1           /(1 + taper_w) * (y2            * (2 - y2           *(1 - taper_w)) - y1      * (2 - y1      * (1 - taper_w))) * m      
+    S_slat__S_wing = c_slat_c_wing/(1 + taper_w) * (b_slat_b_wing * (2 - b_slat_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_slat
+    
+    m_aileron = 1    
+    # S_____S_wing = x1          /(1 + taper_w) * (y2 *(2 - y2* (1 - taper_w)) - y1                 * (2 - y1                 * (1 - taper_w))) * m     
+    S_ail__S_wing  = c_ail_c_wing/(1 + taper_w) * (1 * (2 - 1 * (1 - taper_w)) - (1 - b_ail_b_wing) * (2 - (1 - b_ail_b_wing) * (1 - taper_w))) * m_aileron
+    
+    S_csw = (S_flap__S_wing + S_slat__S_wing + S_ail__S_wing)*S_w
+    
+    W0_lbs = W0_guess*2.20462/gravity
+    S_w__ftsq = S_w * 10.7639
+    S_csw__ftsq = S_csw * 10.7639
+    W_w_lbs = 0.0051 * (W0_lbs * Nz)**0.557 * S_w__ftsq**0.649 * AR_eff**0.55 * tcr_w**(-0.4) * (1 + taper_w)**0.1 * np.cos(sweep_w)**(-1) * S_csw__ftsq**0.1
+    W_w = W_w_lbs * 0.453592 * gravity # N
+    
+    x_CG_w = xm_w + 0.4*cm_w
+    
+    W_h = 27 * gravity * S_h
+    x_CG_h = xm_h + 0.4*cm_h
+    
+    W_v = 27 * gravity * S_v
+    x_CG_v = xm_v + 0.4*cm_v
+    
+    W_f = 24 * gravity * Swet_f
+    x_CG_f = 0.45*L_f
+    
+    W_nlg = 0.15 * 0.043 * W0_guess
+    x_CG_nlg = x_nlg
+    
+    W_mlg = 0.85 * 0.043 * W0_guess
+    x_CG_mlg = x_mlg
+    
+    
+    T_eng_s = T0_guess / n_engines
+    W_eng_s = 14.7 * gravity * (T_eng_s/1000)**1.1 * np.exp(-0.045*airplane['engine']['BPR'])
+    W_eng_installed = 1.3*n_engines*W_eng_s
+    x_CG_eng = x_n + 0.5*L_n
+    
+    W_allelse = 0.17*W0_guess
+    x_CG_ae = 0.45*L_f
+    
+    W_empty = W_w + W_h + W_v + W_f + W_nlg + W_mlg + W_eng_installed + W_allelse
+    x_CG_empty = (W_w*x_CG_w + W_h*x_CG_h + W_v*x_CG_v + W_f*x_CG_f + W_nlg*x_CG_nlg + W_mlg*x_CG_mlg + W_eng_installed*x_CG_eng + W_allelse*x_CG_ae)/W_empty
 
     # Update dictionary
     airplane['W_w'] = W_w
@@ -669,7 +739,7 @@ def empty_weight(W0_guess, T0_guess, airplane):
     airplane['W_mlg'] = W_mlg
     airplane['W_eng'] = W_eng_installed
     airplane['W_allelse'] = W_allelse
-    airplane['xcg_empty'] = xcg_empty
+    airplane['xcg_empty'] = x_CG_empty
 
     return W_empty
 
@@ -1475,8 +1545,8 @@ def standard_airplane(name='fokker100'):
                     'MLW_frac' : 38300/41500, # Max Landing Weight / Max Takeoff Weight
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
-                    'Mach_cruise' : 0.8, # Cruise Mach number
-                    'range_cruise' : 2200*nm2m, # Cruise range [m]
+                    'Mach_cruise' : 0.73, # Cruise Mach number
+                    'range_cruise' : 1200*nm2m, # Cruise range [m]
                     
                     'loiter_time' : 45*60, # Loiter time [s]
                     
@@ -1499,6 +1569,96 @@ def standard_airplane(name='fokker100'):
 
                     'W0_guess' : 40000*gravity # Guess for MTOW
                     }
+        
+        # airplane = {'AR_h ': 4.52 ,
+        #             'AR_v ': 1.03 ,
+        #             'AR_w ': 8.32 ,
+        #             'Cht ': 0.976 ,
+        #             'Cvt ': 0.068 ,
+        #             'D_f ': 3.28 ,
+        #             'D_n ': 1.69 ,
+        #             'L_f ': 31.6 ,
+        #             'L_n ': 4.91 ,
+        #             'Lb_v ': 0.469 ,
+        #             'Lc_h ': 4.23 ,
+        #             'MLW_frac ': 0.9306103504293339 ,
+        #             'Mach_altcruise ': 0.4 ,
+        #             'Mach_cruise ': 0.73 ,
+        #             'Mach_maxcruise ': 0.77 ,
+        #             'S_w ': 93.5 ,
+        #             'W0_guess ': 392400.0 ,
+        #             'W_crew ': 4463.55 ,
+        #             'W_payload ': 95519.97 ,
+        #             'altitude_altcruise ': 4572 ,
+        #             'altitude_cruise ': 10668.0 ,
+        #             'altitude_landing ': 0.0 ,
+        #             'altitude_maxcruise ': 10668.0 ,
+        #             'altitude_takeoff ': 0.0 ,
+        #             'b_ail_b_wing ': 0.34 ,
+        #             'b_flap_b_wing ': 0.6 ,
+        #             'b_slat_b_wing ': 0.0 ,
+        #             'b_tank_b_w_end ': 0.95 ,
+        #             'b_tank_b_w_start ': 0.0 ,
+        #             'block_range ': 740800.0 ,
+        #             'block_time ': 8399.999999999998 ,
+        #             'c_ail_c_wing ': 0.27 ,
+        #             'c_flap_c_wing ': 0.3 ,
+        #             'c_slat_c_wing ': 0.0 ,
+        #             'c_tank_c_w ': 0.4 ,
+        #             'clmax_w ': 1.8 ,
+        #             'deltaISA_landing ': 0.0 ,
+        #             'deltaISA_takeoff ': 15.0 ,
+        #             'dihedral_h ': 0.03490658503988659 ,
+        #             'dihedral_w ': 0.05235987755982988 ,
+        #             'distance_landing ': 1340.0 ,
+        #             'distance_takeoff ': 2050.0 ,
+        #             'engine ': { ' BPR ': 3.04 ,
+        #                         'Cbase ': 0.0001611111111111111 ,
+        #                         'model ': ' Howe turbofan '} ,
+        #             'eta_h ': 1.0 ,
+        #             'flap_type ': ' double slotted' ,
+        #             'h_ground ': 10.668000000000001 ,
+        #             'k_exc_drag ': 0.03 ,
+        #             'k_korn ': 0.91 ,
+        #             'loiter_time ': 2700 ,
+        #             'n_captains ': 1 ,
+        #             'n_copilots ': 1 ,
+        #             'n_engines ': 2 ,
+        #             'n_engines_under_wing ': 0 ,
+        #             'range_altcruise ': 370400.0 ,
+        #             'range_cruise ': 2426120.0 ,
+        #             'rho_fuel ': 804 ,
+        #             'slat_type ': None ,
+        #             'sweep_h ': 0.4537856055185257 ,
+        #             'sweep_v ': 0.6806784082777885 ,
+        #             'sweep_w ': 0.2750638901143063 ,
+        #             'taper_h ': 0.44 ,
+        #             'taper_v ': 0.73 ,
+        #             'taper_w ': 0.25 ,
+        #             'tcr_h ': 0.1 ,
+        #             'tcr_v ': 0.1 ,
+        #             'tcr_w ': 0.123 ,
+        #             'tct_h ': 0.1 ,
+        #             'tct_v ': 0.1 ,
+        #             'tct_w ': 0.096 ,
+        #             'type ': ' transport' ,
+        #             'winglet ': False ,
+        #             'x_mlg ': 17.4 ,
+        #             'x_n ': 21.4 ,
+        #             'x_nlg ': 3.7 ,
+        #             'x_tailstrike ': 23.4 ,
+        #             'x_tank_c_w ': 0.2 ,
+        #             'xcg_crew ': 2.5 ,
+        #             'xcg_payload ': 14.4 ,
+        #             'xr_w ': 13.38 ,
+        #             'y_mlg ': 2.47 ,
+        #             'y_n ': 3.01 ,
+        #             'z_lg ': -2.53 ,
+        #             'z_n ': 0.45 ,
+        #             'z_tailstrike ': -1.54 ,
+        #             'zr_h ': 4.76 ,
+        #             'zr_v ': 1.39 ,
+        #             'zr_w ': -0.99}
 
     elif name == 'my_airplane_1':
 
