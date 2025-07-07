@@ -611,10 +611,17 @@ def engineTSFC(Mach, altitude, airplane):
     
     _,_,rho,_ = atmosphere(altitude, 288.15)
     sigma = rho/1.225
+
     
-    C = Cbase*(1 - 0.15*BPR**0.65)*(1 + 0.28*(1 + 0.063*BPR**2)*Mach)*sigma**0.08
+    if BPR < 4 :
+        Cbase = 0.85/3600
+    else:
+        Cbase = 0.7/3600
     
-    kT = (0.0013*BPR - 0.0397)*altitude/1000 - 0.0248*BPR + 0.7125
+    
+    C = Cbase*(1 - 0.15*BPR**0.65) * (1 + 0.28 * (1 + 0.063*BPR**2) * Mach) * sigma**(0.08)
+    
+    kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
 
     return C, kT
 
@@ -625,21 +632,12 @@ def empty_weight(W0_guess, T0_guess, airplane):
     # Unpack dictionary
     S_w = airplane['S_w']
     AR_eff = airplane['AR_eff']
+    b_w = airplane['b_w']
     taper_w = airplane['taper_w']
     sweep_w = airplane['sweep_w']
     xm_w = airplane['xm_w']
     cm_w = airplane['cm_w']
     tcr_w = airplane['tcr_w']
-    b_w = airplane['b_w']
-
-    flap_type = airplane['flap_type']
-    c_flap_c_wing = airplane['c_flap_c_wing']
-    b_flap_b_wing = airplane['b_flap_b_wing']
-    slat_type = airplane['slat_type']
-    c_slat_c_wing = airplane['c_slat_c_wing']
-    b_slat_b_wing = airplane['b_slat_b_wing']
-    c_ail_c_wing = airplane['c_ail_c_wing']
-    b_ail_b_wing = airplane['b_ail_b_wing']
     
     S_h = airplane['S_h']
     xm_h = airplane['xm_h']
@@ -660,13 +658,26 @@ def empty_weight(W0_guess, T0_guess, airplane):
     x_nlg = airplane['x_nlg']
     x_mlg = airplane['x_mlg']
     
+    flap_type = airplane['flap_type']
+    c_flap_c_wing = airplane['c_flap_c_wing']
+    b_flap_b_wing = airplane['b_flap_b_wing']
+    slat_type = airplane['slat_type']
+    c_slat_c_wing = airplane['c_slat_c_wing']
+    b_slat_b_wing = airplane['b_slat_b_wing']
+    c_ail_c_wing = airplane['c_ail_c_wing']
+    b_ail_b_wing = airplane['b_ail_b_wing']
+    
     altitude_cruise = airplane['altitude_cruise']
     Mach_cruise = airplane['Mach_cruise']
     
     airplane_type = airplane['type']
     
-    Nz = 1.5*2.5
     
+    # Wing Weight calculations
+    
+    Nz = 1.5*2.5 # Ultimate load factor
+    
+    # Flaps Area
     if airplane['flap_type'] == 'plain':
         m_flap = 1
     elif airplane['flap_type'] == 'single slotted':
@@ -675,9 +686,12 @@ def empty_weight(W0_guess, T0_guess, airplane):
         m_flap = 1.63
     elif airplane['flap_type'] == 'triple slotted':
         m_flap = 1.81    
+        
     # S_____S_wing = x1           /(1 + taper_w) * (y2            * (2 - y2           *(1 - taper_w)) - y1      * (2 - y1      * (1 - taper_w))) * m    
     S_flap__S_wing = c_flap_c_wing/(1 + taper_w) * (b_flap_b_wing * (2 - b_flap_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_flap
     
+    
+    # Slats Area
     if airplane['slat_type'] == None:
         m_slat = 0
     elif airplane['slat_type'] == 'leading edge flap':
@@ -687,46 +701,74 @@ def empty_weight(W0_guess, T0_guess, airplane):
     elif airplane['slat_type'] == 'slats':
         m_slat = 1.25   
     # S_____S_wing = x1           /(1 + taper_w) * (y2            * (2 - y2           *(1 - taper_w)) - y1      * (2 - y1      * (1 - taper_w))) * m      
-    S_slat__S_wing = c_slat_c_wing/(1 + taper_w) * (b_slat_b_wing * (2 - b_slat_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_slat
+    S_slat__S_wing = c_slat_c_wing/(1 + taper_w) * (b_slat_b_wing * (2 - b_slat_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_slat    
     
+    # Ailerons Area
     m_aileron = 1    
     # S_____S_wing = x1          /(1 + taper_w) * (y2 *(2 - y2* (1 - taper_w)) - y1                 * (2 - y1                 * (1 - taper_w))) * m     
     S_ail__S_wing  = c_ail_c_wing/(1 + taper_w) * (1 * (2 - 1 * (1 - taper_w)) - (1 - b_ail_b_wing) * (2 - (1 - b_ail_b_wing) * (1 - taper_w))) * m_aileron
     
+    # Control Surfaces Area
     S_csw = (S_flap__S_wing + S_slat__S_wing + S_ail__S_wing)*S_w
     
-    W0_lbs = W0_guess*2.20462/gravity
-    S_w__ftsq = S_w * 10.7639
-    S_csw__ftsq = S_csw * 10.7639
-    W_w_lbs = 0.0051 * (W0_lbs * Nz)**0.557 * S_w__ftsq**0.649 * AR_eff**0.55 * tcr_w**(-0.4) * (1 + taper_w)**0.1 * np.cos(sweep_w)**(-1) * S_csw__ftsq**0.1
-    W_w = W_w_lbs * 0.453592 * gravity # N
+    # Units Conversions
+    W0_lbs = W0_guess/lb2N # N to lbs
+    S_w__ftsq = S_w / ft2m**2 # m^2 to ft^2
+    S_csw__ftsq = S_csw / ft2m**2 # m^2 to ft^2
     
+    # Wing Weight (in lbs then kg)
+    W_w_lbs = 0.0051 * (W0_lbs * Nz)**0.557 * S_w__ftsq**0.649 * AR_eff**0.55 * tcr_w**(-0.4) * (1 + taper_w)**0.1 * np.cos(sweep_w)**(-1) * S_csw__ftsq**0.1
+    W_w = W_w_lbs * lb2N # lbs to N
+    
+    # Wing Center of Gravity Estimation
     x_CG_w = xm_w + 0.4*cm_w
     
+    # Horizontal Tail Weight
     W_h = 27 * gravity * S_h
+    
+    # HT Center of Gravity Estimation
     x_CG_h = xm_h + 0.4*cm_h
     
+    # Vertical Tail Weight
     W_v = 27 * gravity * S_v
+    
+    # VT Center of Gravity Estimation
     x_CG_v = xm_v + 0.4*cm_v
     
+    #Fuselage Weight
     W_f = 24 * gravity * Swet_f
+    
+    # Fuselage Center of Gravity Estimation
     x_CG_f = 0.45*L_f
     
+    # Nose Landing Gear Weight 
     W_nlg = 0.15 * 0.043 * W0_guess
+    
+    # Nose Landing Gear Center of Gravity Estimation
     x_CG_nlg = x_nlg
     
+    # Main Landing Gear Weight 
     W_mlg = 0.85 * 0.043 * W0_guess
+    
+    # Main Landing Gear Center of Gravity Estimation
     x_CG_mlg = x_mlg
     
     
     T_eng_s = T0_guess / n_engines
+    
+    # Engine Weight (Isolated)
     W_eng_s = 14.7 * gravity * (T_eng_s/1000)**1.1 * np.exp(-0.045*airplane['engine']['BPR'])
+    # Engine Weight (Installed) 
     W_eng_installed = 1.3*n_engines*W_eng_s
+    
+    # Engine Center of Gravity Estimation
     x_CG_eng = x_n + 0.5*L_n
     
+    # Remaining Systemas Weight and Center of Gravity Estimations
     W_allelse = 0.17*W0_guess
     x_CG_ae = 0.45*L_f
     
+    # Total Empty Weight
     W_empty = W_w + W_h + W_v + W_f + W_nlg + W_mlg + W_eng_installed + W_allelse
     x_CG_empty = (W_w*x_CG_w + W_h*x_CG_h + W_v*x_CG_v + W_f*x_CG_f + W_nlg*x_CG_nlg + W_mlg*x_CG_mlg + W_eng_installed*x_CG_eng + W_allelse*x_CG_ae)/W_empty
 
@@ -760,9 +802,74 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     range_altcruise = airplane['range_altcruise']
     
     airplane_type = airplane['type']
+    
+    # TSFC computation using engineTSFC function
+    C_cruise,_ = engineTSFC(Mach_cruise, altitude_cruise, airplane)
+    
+    # Mass fractions for Transport Jets (Roskam, J., Aircraft Design. Part I: Preliminary Sizing of Airplanes, Roskam Aviation and Engineering Corporation, Kansas, 1985)
+    Mf_start = 0.990
+    Mf_taxi = 0.990
+    Mf_takeoff = 0.995
+    Mf_climb = 0.980
+    Mf_descent = 0.990
+    Mf_landing = 0.992
+    
+    # Computation of Mass fraction in cruise (using Breguet equations
+    W_cruise = W0_guess * Mf_start * Mf_taxi * Mf_takeoff * Mf_climb
+    
+    # Atmospheric data
+    T, p, rho, mi = atmosphere(altitude_cruise, 288.15)
+    
+    # Velocities
+    a_cruise = np.sqrt(gamma_air * R_air * T)
+    
+    V_cruise = Mach_cruise * a_cruise
+    
+    # Aerodynamic Coefficients (L/D)
+    CL_cruise = 2 * W_cruise / (rho * S_w * V_cruise**2)
+    
+    CD_cruise, _, dragDict_cruise = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W0_guess)
 
+    Mf_cruise = np.exp( - range_cruise * C_cruise * CD_cruise / (V_cruise * CL_cruise))
+    
+    # Computation of Mass fraction in Loiter  
+    CD0_cruise = dragDict_cruise['CD0']
+    CD0_wave_cruise = dragDict_cruise['CDwave']
+    K_cruise = dragDict_cruise['K']
+        
+    L_D_max = 1 / ( 2* np.sqrt( (CD0_cruise + CD0_wave_cruise) *  K_cruise ) )
+   
+    C_loiter = C_cruise - 0.1/3600
+    
+    Mf_loiter = np.exp(-loiter_time * C_loiter/L_D_max)
+    
+    # Computation of Mass fraction in Alternative Cruise
+    C_altcruise, _ = engineTSFC(Mach_altcruise, altitude_altcruise, airplane)
+  
+    
+    T_alt, p_alt, rho_alt, mi_alt = atmosphere(altitude_altcruise, 288.15)    
+    a_altcruise = np.sqrt(gamma_air * R_air * T_alt)
+    
+    V_altcruise = Mach_altcruise * a_altcruise    
+    
+    W_altcruise = W_cruise * Mf_cruise * Mf_loiter * Mf_descent
+    
+    CL_altcruise = 2 * W_altcruise / (rho_alt * S_w * V_altcruise**2)
+    CD_altcruise, _, dragDict_altcruise = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_altcruise, W0_guess)
+    
+    Mf_altcruise = np.exp( - range_altcruise * C_altcruise * CD_altcruise / (V_altcruise * CL_altcruise))
+   
 
-    return W_fuel, Mf_cruise
+    # Computation of the overall Mass Fraction for the mission
+    Mf = Mf_start * Mf_taxi * Mf_takeoff * Mf_climb * Mf_cruise * Mf_loiter * Mf_descent * Mf_altcruise * Mf_landing
+    
+    kf = 1.06 # Factor that considers in-line stuck fuel
+    
+    W_fuel = kf * (1 - Mf) * W0_guess 
+    
+    # The .pdf file says that W_cruise is the output, but the code uses this function and needs the Mf_cruise variable
+
+    return W_fuel, W_cruise
 
 #----------------------------------------
 
