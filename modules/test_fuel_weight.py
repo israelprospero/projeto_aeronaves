@@ -21,4 +21,4 @@ W_fuel, W_cruise = dt.fuel_weight(W0_guess, airplane, range_cruise)
 
 # Print results and updated dicionary
 print("W_fuel = ",W_fuel)
-print("W_cruise = ",W_cruise)
+print("W_cruise = ",W_cruise) # This functions uses the Mf_cruise variable as second output, so if you want to check the values change the output in the designTool.py file
