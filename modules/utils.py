@@ -161,6 +161,30 @@ def print_fuel_table(airplane):
     df.to_excel("fuel_breakdown.xlsx", index=False)
     print("\nTabela exportada para 'fuel_breakdown.xlsx'.")
 
+def plot_W0_x_ar_w(ar_w_range, airplane, num):
+    
+    ar_w_list = []
+    W0_list = []
+    
+    for k in ar_w_range:
+        airplane['AR_w'] = k
+        dt.geometry(airplane) # chama a função geometry para atualizar  geometria do avião com o novo ar_w antes de chamar a função 'W0'
+        ar_w_list.append(k)    
+        W0, _, _, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
+        W0_list.append(W0)
+    
+    print(ar_w_list)
+    print(W0_list)
+    plt.figure()
+    plt.plot(ar_w_list, W0_list)
+    plt.xlabel('AR_w',fontsize=14)
+    plt.ylabel('W0',fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.title(f'Airplane {num} - W0 x AR_w')
+    plt.grid(True)
+    plt.show()
+
 
 '''
 def weight(W0_guess, T0_guess, airplane):
