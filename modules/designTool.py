@@ -867,7 +867,21 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     
     W_fuel = kf * (1 - Mf) * W0_guess 
     
-    # The .pdf file says that W_cruise is the output, but the code uses this function and needs the Mf_cruise variable
+    W_used_fuel = W_fuel / kf           # total consumido
+    W_trapped_fuel = W_fuel - W_used_fuel
+    Mf_trapped = 1 - (W_trapped_fuel / W0_guess )
+    
+    airplane['Mf_engine_start'] = Mf_start
+    airplane['Mf_taxi'] = Mf_taxi
+    airplane['Mf_takeoff'] = Mf_takeoff
+    airplane['Mf_climb'] = Mf_climb
+    airplane['Mf_cruise'] = Mf_cruise
+    airplane['Mf_loiter'] = Mf_loiter
+    airplane['Mf_descent'] = Mf_descent
+    airplane['Mf_altcruise'] = Mf_altcruise
+    airplane['Mf_landing'] = Mf_landing
+    airplane['Mf_trapped'] = Mf_trapped
+    airplane['Mf_total'] = Mf
 
     return W_fuel, W_cruise
 
@@ -897,6 +911,40 @@ def weight(W0_guess, T0_guess, airplane):
         delta = W0 - W0_guess
 
         W0_guess = W0
+        
+    airplane['W0'] = W0
+    airplane['W_empty'] = W_empty
+    airplane['W_fuel'] = W_fuel
+
+    phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
+              'loiter', 'descent', 'altcruise', 'landing', 'trapped']
+    
+    Mfs = [airplane['Mf_' + p] for p in phases]
+    
+    W = W0 / gravity  # [kg]
+    Wfuel = W_fuel / gravity  # [kg]
+
+    airplane['W_gross_total'] = W
+    airplane['W_gross_fuel_total'] = Wfuel
+
+    fuel_breakdown = {}
+    percent_breakdown = {}
+    mf_breakdown = {}
+
+    for phase, mf in zip(phases, Mfs):
+        fuel = W * (1 - mf)  # combustível consumido
+        percent = 100 * fuel / Wfuel if Wfuel > 0 else 0
+        airplane[f'W_gross_{phase}'] = W
+        fuel_breakdown[phase.replace('_', ' ').title()] = fuel
+        percent_breakdown[phase.replace('_', ' ').title()] = percent
+        mf_breakdown[phase.replace('_', ' ').title()] = mf
+        W *= mf  # aplica Mf para atualizar o peso restante
+
+    airplane['fuel_breakdown'] = fuel_breakdown
+    airplane['fuel_percent_breakdown'] = percent_breakdown
+    airplane['fuel_Mf_breakdown'] = mf_breakdown
+    airplane['fuel_total_used'] = sum(v for k, v in fuel_breakdown.items() if k != 'Trapped fuel')
+    airplane['fuel_total'] = Wfuel
 
     return W0, W_empty, W_fuel, Mf_cruise
 

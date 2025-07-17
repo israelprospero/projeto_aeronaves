@@ -126,3 +126,95 @@ def print_drag_table(CD, dragDict):
     # Print table
     headers = ["Name", "Value", "Value * 10^4", "Value / CD1"]
     print(tabulate(table, headers=headers, floatfmt=".4f"))
+
+def print_fuel_table(airplane):
+    import pandas as pd
+    from tabulate import tabulate
+
+    mfs = airplane['fuel_Mf_breakdown']
+    fuels = airplane['fuel_breakdown']
+    percents = airplane['fuel_percent_breakdown']
+
+    table = []
+    for phase in mfs.keys():
+        mf = mfs[phase]
+        fuel = fuels[phase]
+        percent = percents[phase]
+        table.append([phase, f"{mf:.4f}", f"{fuel:.1f}", f"{percent:.1f}"])
+
+    # Soma total
+    total_fuel = airplane['fuel_total']
+    total_used = airplane['fuel_total_used']
+
+    table.append(['TOTAL (used)', '-', f"{total_used:.1f}", "100.0"])
+    table.append(['TOTAL (with trapped)', '-', f"{total_fuel:.1f}", "-"])
+
+    headers = ["Mission phase", "Mf", "Fuel consumed [kg]", "% of mission fuel"]
+
+    # Imprimir na tela
+    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+
+    # Criar DataFrame
+    df = pd.DataFrame(table[:-2], columns=headers)
+
+    # Exportar para Excel
+    df.to_excel("fuel_breakdown.xlsx", index=False)
+    print("\nTabela exportada para 'fuel_breakdown.xlsx'.")
+
+
+'''
+def weight(W0_guess, T0_guess, airplane):
+
+    # Unpacking dictionary
+    W_payload = airplane['W_payload']
+    W_crew = airplane['W_crew']
+    range_cruise = airplane['range_cruise']
+
+    # Set iterator
+    delta = 1000
+
+    while abs(delta) > 10:
+
+        # We need to call fuel_weight first since it
+        # calls the aerodynamics module to get Swet_f used by
+        # the empty weight function
+        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise=range_cruise, update_Mf_hist=True)
+
+        W_empty = empty_weight(W0_guess, T0_guess, airplane)
+
+        W0 = W_empty + W_fuel + W_payload + W_crew
+
+        delta = W0 - W0_guess
+
+        W0_guess = W0
+        
+    airplane['W0'] = W0
+    airplane['W_empty'] = W_empty
+    airplane['W_fuel'] = W_fuel
+
+    # Calcular pesos brutos por fase
+    phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
+              'loiter', 'descent', 'altcruise', 'landing', 'trapped']
+    
+    Mfs = [airplane['Mf_' + p] for p in phases]
+    
+    W = W0/gravity
+    Wfuel = W_fuel/gravity
+    airplane['W_gross_total'] = W
+    airplane['W_gross_fuel_total'] = Wfuel
+    for phase, mf in zip(phases, Mfs):
+        W_spent = W*((1 - mf))
+        airplane[f'W_gross_{phase}'] = W_spent  # em kg
+        W = W - W_spent
+
+    # Calcular combustíveis consumidos
+    fuel_breakdown = {}
+    total_used_fuel = 0
+
+    for phase, mf in zip(phases, Mfs):
+        fuel = W0 * mf / gravity
+        fuel_breakdown[phase.replace('_', ' ').title()] = fuel
+        total_used_fuel += fuel
+
+    return W0, W_empty, W_fuel, Mf_cruise
+'''
