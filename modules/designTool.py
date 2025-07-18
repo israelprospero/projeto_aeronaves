@@ -1831,10 +1831,10 @@ def standard_airplane(name='fokker100'):
                     'loiter_time' : 45*60, # Loiter time [s]
                     
                     'altitude_altcruise' : 4572, # Alternative cruise altitude [m]
-                    'Mach_altcruise' : 0.8, # Alternative cruise Mach number
+                    'Mach_altcruise' : 0.4, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
-                    'W_payload' : 12000*gravity, # Payload weight [N]
+                    'W_payload' : 10000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 5*91*gravity, # Crew weight [N]
@@ -1941,8 +1941,8 @@ def standard_airplane(name='fokker100'):
                     'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
-                    'Mach_cruise' : 0.73, # Cruise Mach number
-                    'range_cruise' : 1200*nm2m, # Cruise range [m]
+                    'Mach_cruise' : 0.8, # Cruise Mach number
+                    'range_cruise' : 2200*nm2m, # Cruise range [m]
                     
                     'loiter_time' : 45*60, # Loiter time [s]
                     
@@ -1950,7 +1950,7 @@ def standard_airplane(name='fokker100'):
                     'Mach_altcruise' : 0.4, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
-                    'W_payload' : 12000*gravity, # Payload weight [N]
+                    'W_payload' : 10000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 5*91*gravity, # Crew weight [N]
