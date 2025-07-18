@@ -1831,6 +1831,7 @@ def standard_airplane(name='fokker100'):
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
                     'W0_guess' : 50150*gravity, # Guess for MTOW
+                    'T0_guess' : 0.3*50150*gravity, # 30% OF W0_GUES!!!!!!!!
                     'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
         
@@ -1947,6 +1948,7 @@ def standard_airplane(name='fokker100'):
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
                     'W0_guess' : 49200*gravity, # Guess for MTOW
+                    'T0_guess' : 0.3*49200*gravity, # 30% OF W0_GUES!!!!!!!!
                     'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
                     }
     
