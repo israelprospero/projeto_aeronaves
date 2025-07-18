@@ -130,26 +130,29 @@ def print_drag_table(CD, dragDict):
 def print_fuel_table(airplane, export_excel=False, filename="fuel_table.xlsx"):
     import pandas as pd
 
-    # Dados já completos do dicionário airplane
-    total_used_fuel = airplane['fuel_total_used']
+    # Dados
     total_fuel = airplane['fuel_total']
     fuel_breakdown = airplane['fuel_breakdown']
-    percent_breakdown = airplane['fuel_percent_breakdown']
     mf_breakdown = airplane['fuel_Mf_breakdown']
 
-    # Criar DataFrame
+    # Calcular percentuais já com trapped incluso no total
+    percent_breakdown = {
+        phase: f"{100 * value / total_fuel:.1f}" if isinstance(value, (int, float)) else value
+        for phase, value in fuel_breakdown.items()
+    }
+
+    # Criar DataFrame formatado
     df = pd.DataFrame({
         "Mission phase": list(mf_breakdown.keys()),
         "Mf": [f"{mf:.4f}" if isinstance(mf, float) else mf for mf in mf_breakdown.values()],
         "Fuel consumed [kg]": [f"{fuel:.1f}" for fuel in fuel_breakdown.values()],
-        "% of mission fuel": [f"{pct:.1f}" if isinstance(pct, (float, int)) else pct for pct in percent_breakdown.values()]
+        "% of mission fuel": list(percent_breakdown.values())
     })
 
-    # Adicionar linhas totais
-    df.loc[len(df.index)] = ["TOTAL (used)", "-", f"{total_used_fuel:.1f}", "100.0"]
-    df.loc[len(df.index)] = ["TOTAL (with trapped)", "-", f"{total_fuel:.1f}", "-"]
+    # Adicionar única linha de total
+    df.loc[len(df.index)] = ["TOTAL", "-", f"{total_fuel:.1f}", "100.0"]
 
-    # Imprimir tabela
+    # Imprimir tabela formatada
     from tabulate import tabulate
     print(tabulate(df.values, headers=df.columns, tablefmt="fancy_grid"))
 

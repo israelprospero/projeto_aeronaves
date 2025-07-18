@@ -10,6 +10,7 @@ nm2m = dt.nm2m
 pi = np.pi
 
 airplane_1 = dt.standard_airplane('my_airplane_1')
+#airplane_1 = dt.standard_airplane('fokker100')
 dt.geometry(airplane_1)
 
 # ------------------------------------------------------------------------------------------------
