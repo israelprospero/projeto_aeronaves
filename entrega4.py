@@ -10,19 +10,19 @@ ft2m = dt.ft2m
 nm2m = dt.nm2m
 pi = np.pi    
 
-airplane = dt. standard_airplane ('fokker100')
+airplane = dt. standard_airplane ('my_airplane_2')
 dt.geometry(airplane)
 
 # dt.plot3d(airplane)
 
 W0_guess = 40000*dt.gravity
 T0_guess = 0.3*W0_guess
-W0, W_empty, W_fuel, _, Mf_list = dt.weight(W0_guess,T0_guess, airplane)
+W0, W_empty, W_fuel, _, Mf_list = dt.weight(W0_guess, T0_guess, airplane)
 
 print('Weights in kgf:')
 print('W0: %d '%(W0/dt.gravity))
 print('W_empty : %d '%(W_empty/dt.gravity))
-print('W_fuel : %d '%(W_fuel /dt.gravity))
+print('W_fuel : %d '%(W_fuel/dt.gravity))
 print('W_payload : %d '%(airplane['W_payload']/dt.gravity))
 print('W_crew : %d '%(airplane['W_crew']/dt.gravity))
 
@@ -32,15 +32,17 @@ print('breakdown :')
 for key in ['W_w','W_h','W_v','W_f','W_nlg','W_mlg','W_eng','W_allelse']:
     print(key +': %d '%(airplane[key]/dt.gravity))
     
-    Weight_list.append(airplane[key])
+    Weight_list.append(airplane[key]/dt.gravity)
 
-Key_list = ['Combustível', 'Payload', 'Tripulação', 'Wing', 'HT', 'VT', 'Fuselagem', 'NLG', 'MLG', 'Mtores', 'allelse']
+Key_list = ['Combustível', 'Payload', 'Tripulação', 'Wing', 'HT', 'VT', 'Fuselagem', 'NLG', 'MLG', 'Motores', 'allelse']
+
+total_weight = sum(Weight_list)
+labels = [f'{k} ({w:.1f} kg / {w / total_weight * 100:.1f}%)' for k, w in zip(Key_list, Weight_list)]
 
 plt.figure(figsize=(8, 8))
-plt.pie(Weight_list, labels=Key_list, autopct='%1.1f%%', startangle=140)
-plt.title('Distribuição de Pesos da Aeronave (kgf)')
-plt.axis('equal')
-plt.tight_layout()
+plt.pie(Weight_list, labels=labels, startangle=140)
+plt.title('Distribuição de Peso da Aeronave')
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.show()
 
 ## Table
