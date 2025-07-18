@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 # Sample script on how to use the fuel_weight function from designTool.
 # Remember to save this script in the same directory as designTool.py
 

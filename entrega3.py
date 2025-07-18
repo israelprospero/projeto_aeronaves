@@ -77,20 +77,6 @@ LD1_cruise = CL1_cruise/CD1_cruise
 print(f'(L/D)_cruise = {LD1_cruise:.2f} at CL = {CL1_cruise:.2f}, CD = {CD1_cruise:.2f}\n\n')
 
 # ------------------------------------------------------------------------------------------------
-### WEEK 5 ###
-### Questions 2 and 3 ###
-
-# ar_w = airplane_1['AR_w'] # cria a variável 'aspect ratio wing' (alongamento da asa) 
-ar_w = np.arange(6.0, 14.0,0.01) # varia o alongamento de 6 a 14 no passo de 0.01 e armazena no dicionário
-
-## Plot
-# W0 vs ar_w
-m.plot_W0_x_ar_w(ar_w, airplane_1, 1)
-
-### WEEK 5 ###
-## 
-
-# ------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------ #
 # ------------------- AIRPLANE 2 ----------------------------- #

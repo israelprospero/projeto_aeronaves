@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from modules import designTool as dt
+import designTool as dt
 import numpy as np
 from tabulate import tabulate
 
@@ -128,6 +128,7 @@ def print_drag_table(CD, dragDict):
     print(tabulate(table, headers=headers, floatfmt=".4f"))
 
 def print_fuel_table(airplane):
+    
     import pandas as pd
     from tabulate import tabulate
 
