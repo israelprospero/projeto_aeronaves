@@ -8,30 +8,7 @@ from tabulate import tabulate
 gravity = dt.gravity
 ft2m = dt.ft2m
 nm2m = dt.nm2m
-pi = np.pi
-
-# airplane = dt. standard_airplane ('fokker100')
-
-# airplane ['AR_w'] = 8.43
-# dt.geometry(airplane)
-
-# # dt.plot3d(airplane)
-
-# W0_guess = 40000* dt. gravity
-# T0_guess = 0.3* W0_guess
-# W0, W_empty, W_fuel, Mf_cruise = dt.weight(W0_guess,T0_guess, airplane)
-
-# print('Weights in kgf:')
-# print('W0: %d '%(W0/dt.gravity))
-# print('W_empty : %d '%(W_empty/dt.gravity))
-# print('W_fuel : %d '%( W_fuel /dt. gravity ))
-# print('W_payload : %d '%( airplane ['W_payload']/ dt. gravity ))
-# print('W_crew : %d '%( airplane ['W_crew']/ dt. gravity ))
-
-# print('breakdown :')
-# for key in ['W_w','W_h','W_v','W_f','W_nlg','W_mlg','W_eng','W_allelse']:
-#     print(key +': %d '%(airplane[key]/ dt.gravity))
-    
+pi = np.pi    
 
 airplane = dt. standard_airplane ('fokker100')
 dt.geometry(airplane)
