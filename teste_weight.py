@@ -1,6 +1,5 @@
 import modules.designTool as dt
-from modules.utils import print_fuel_table  # se você salvou lá
-# ou use diretamente no mesmo arquivo
+from modules.utils import print_fuel_table
 
 
 # Load the standard airplane
