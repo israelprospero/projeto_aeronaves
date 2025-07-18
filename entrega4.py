@@ -2,6 +2,7 @@ from modules import designTool as dt
 from modules import utils as m
 import numpy as np
 import matplotlib.pyplot as plt
+from modules.utils import print_fuel_table
 
 gravity = dt.gravity
 ft2m = dt.ft2m
@@ -23,4 +24,10 @@ ar_w = np.arange(6.0, 14.0,0.01) # varia o alongamento de 6 a 14 no passo de 0.0
 m.plot_W0_x_ar_w(ar_w, airplane_1, 1)
 
 ### WEEK 5 ###
-## 
+## Weight estimation
+W0_guess = 40000 * dt.gravity
+T0_guess = 0.3 * W0_guess
+
+W0, W_empty, W_fuel, Mf_cruise = dt.weight(W0_guess, T0_guess, airplane_1)
+
+print_fuel_table(airplane_1)
