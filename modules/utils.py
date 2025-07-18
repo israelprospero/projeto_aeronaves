@@ -172,12 +172,15 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     for k in ar_w_range:
         airplane['AR_w'] = k
         dt.geometry(airplane) # chama a função geometry para atualizar  geometria do avião com o novo ar_w antes de chamar a função 'W0'
-        ar_w_list.append(k)    
-        W0, _, _, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
+        ar_w_list.append(k)   
+        
+        W0_guess = airplane['W0_guess']
+        T0_guess = 0.3*W0_guess
+        W0, _, _, _ = dt.weight(W0_guess, T0_guess, airplane) #calcula o weight para cada alongamento (ar_w)
         W0_list.append(W0)
     
-    print(ar_w_list)
-    print(W0_list)
+    # print(ar_w_list)
+    # print(W0_list)
     plt.figure()
     plt.plot(ar_w_list, W0_list)
     plt.xlabel('AR_w',fontsize=14)
