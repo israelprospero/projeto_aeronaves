@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import designTool as dt
+from modules import designTool as dt
 import numpy as np
 from tabulate import tabulate
 

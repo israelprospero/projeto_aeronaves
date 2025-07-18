@@ -1,7 +1,6 @@
-import modules.designTool as dt
-import modules.utils as m
+from modules import designTool as dt
+from modules import utils as m
 import numpy as np
-import pprint
 import matplotlib.pyplot as plt
 
 gravity = dt.gravity
