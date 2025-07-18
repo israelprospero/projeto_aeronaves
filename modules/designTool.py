@@ -681,11 +681,11 @@ def empty_weight(W0_guess, T0_guess, airplane):
     if airplane['flap_type'] == 'plain':
         m_flap = 1
     elif airplane['flap_type'] == 'single slotted':
-        m_flap = 1.44
+        m_flap = 1.15*1.25
     elif airplane['flap_type'] == 'double slotted':
-        m_flap = 1.63
+        m_flap = 1.30*1.25
     elif airplane['flap_type'] == 'triple slotted':
-        m_flap = 1.81    
+        m_flap = 1.45*1.25  
         
     # S_____S_wing = x1           /(1 + taper_w) * (y2            * (2 - y2           *(1 - taper_w)) - y1      * (2 - y1      * (1 - taper_w))) * m    
     S_flap__S_wing = c_flap_c_wing/(1 + taper_w) * (b_flap_b_wing * (2 - b_flap_b_wing*(1 - taper_w)) - D_f/b_w * (2 - D_f/b_w * (1 - taper_w))) * m_flap
@@ -814,6 +814,8 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     Mf_descent = 0.990
     Mf_landing = 0.992
     
+    Mf_list = [Mf_start, Mf_taxi, Mf_takeoff, Mf_climb]
+    
     # Computation of Mass fraction in cruise (using Breguet equations
     W_cruise = W0_guess * Mf_start * Mf_taxi * Mf_takeoff * Mf_climb
     
@@ -831,6 +833,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     CD_cruise, _, dragDict_cruise = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W0_guess)
 
     Mf_cruise = np.exp( - range_cruise * C_cruise * CD_cruise / (V_cruise * CL_cruise))
+    Mf_list.append(Mf_cruise)
     
     # Computation of Mass fraction in Loiter  
     CD0_cruise = dragDict_cruise['CD0']
@@ -842,6 +845,8 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     C_loiter = C_cruise - 0.1/3600
     
     Mf_loiter = np.exp(-loiter_time * C_loiter/L_D_max)
+    Mf_list.append(Mf_loiter)
+    Mf_list.append(Mf_descent)
     
     # Computation of Mass fraction in Alternative Cruise
     C_altcruise, _ = engineTSFC(Mach_altcruise, altitude_altcruise, airplane)
@@ -858,6 +863,8 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     CD_altcruise, _, dragDict_altcruise = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_altcruise, W0_guess)
     
     Mf_altcruise = np.exp( - range_altcruise * C_altcruise * CD_altcruise / (V_altcruise * CL_altcruise))
+    Mf_list.append(Mf_altcruise)
+    Mf_list.append(Mf_landing)
    
 
     # Computation of the overall Mass Fraction for the mission
@@ -869,7 +876,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     
     # The .pdf file says that W_cruise is the output, but the code uses this function and needs the Mf_cruise variable
 
-    return W_fuel, W_cruise
+    return W_fuel, W_cruise, Mf_list
 
 #----------------------------------------
 
@@ -888,7 +895,7 @@ def weight(W0_guess, T0_guess, airplane):
         # We need to call fuel_weight first since it
         # calls the aerodynamics module to get Swet_f used by
         # the empty weight function
-        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise=range_cruise, update_Mf_hist=True)
+        W_fuel, Mf_cruise, Mf_list = fuel_weight(W0_guess, airplane, range_cruise=range_cruise, update_Mf_hist=True)
 
         W_empty = empty_weight(W0_guess, T0_guess, airplane)
 
@@ -898,7 +905,7 @@ def weight(W0_guess, T0_guess, airplane):
 
         W0_guess = W0
 
-    return W0, W_empty, W_fuel, Mf_cruise
+    return W0, W_empty, W_fuel, Mf_cruise, Mf_list
 
 #----------------------------------------
 
@@ -1696,7 +1703,7 @@ def standard_airplane(name='fokker100'):
                     'zr_w' : -0.99, # Vertical position of the wing (with respect to the fuselage nose) [m]
                     'tcr_w' : 0.123, # t/c of the root section of the wing
                     'tct_w' : 0.096, # t/c of the tip section of the wing
-                    
+                        
                     'Cht' : 0.976, # Horizontal tail volume coefficient
                     'Lc_h' : 4.23, # Non-dimensional lever of the horizontal tail (lever/wing_mac)
                     'AR_h' : 4.52, # HT aspect ratio
@@ -1707,7 +1714,7 @@ def standard_airplane(name='fokker100'):
                     'tcr_h' : 0.1, # t/c of the root section of the HT
                     'tct_h' : 0.1, # t/c of the tip section of the HT
                     'eta_h' : 1.0, # Dynamic pressure factor of the HT
-                    
+                        
                     'Cvt' : 0.068, # Vertical tail volume coefficient
                     'Lb_v' : 0.469, # Non-dimensional lever of the vertical tail (lever/wing_span)
                     'AR_v' : 1.03, # VT aspect ratio
@@ -1716,80 +1723,80 @@ def standard_airplane(name='fokker100'):
                     'zr_v' : 1.39, # Vertical position of the VT [m]
                     'tcr_v' : 0.1, # t/c of the root section of the VT
                     'tct_v' : 0.1, # t/c of the tip section of the VT
-                    
+                        
                     'L_f' : 31.6, # Fuselage length [m]
                     'D_f' : 3.28, # Fuselage diameter [m]
-                    
+                        
                     'x_n' : 21.4, # Longitudinal position of the nacelle frontal face [m]
                     'y_n' : 3.01, # Lateral position of the nacelle centerline [m]
                     'z_n' : 0.45, # Vertical position of the nacelle centerline [m]
                     'L_n' : 4.91, # Nacelle length [m]
                     'D_n' : 1.69, # Nacelle diameter [m]
-                    
+                        
                     'n_engines' : 2, # Number of engines
                     'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 #'model' : 'Raymer turbofan', # Check engineTSFC function for options
                                 'BPR' : 3.04, # Engine bypass ratio
-                                'Cbase' : 0.58/3600, # I adjusted this value by hand to match TSFC=0.70 at cruise (This is the value I found for this engine)
+                                'Cbase' : 0.839363767995491/3600, # I adjusted this value by hand to match TSFC=0.70 at cruise (This is the value I found for this engine)
                                 },
-                    
+                        
                     'x_nlg' : 3.7, # Longitudinal position of the nose landing gear [m]
                     'x_mlg' : 17.4, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
                     'z_lg' : -2.53, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.4, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -1.54, # Vertical position of critical tailstrike point [m]
-                    
+                        
                     'c_tank_c_w' : 0.4, # Fraction of the wing chord occupied by the fuel tank
                     'x_tank_c_w' : 0.2, # Fraction of the wing chord where fuel tank starts
                     'b_tank_b_w_start' : 0.0, # Fraction of the wing semi-span where fuel tank starts
                     'b_tank_b_w_end' : 0.95, # Fraction of the wing semi-span where fuel tank ends
-                    
+                        
                     'clmax_w' : 1.8, # Maximum lift coefficient of wing airfoil
                     'k_korn' : 0.91, # Airfoil technology factor for Korn equation (wave drag)
-        
+            
                     'flap_type' : 'double slotted',  # Flap type
                     'c_flap_c_wing' : 0.30, # Fraction of the wing chord occupied by flaps
                     'b_flap_b_wing' : 0.60, # Fraction of the wing span occupied by flaps (including fuselage portion)
-                    
+                        
                     'slat_type' : None, # Slat type
                     'c_slat_c_wing' : 0.0, # Fraction of the wing chord occupied by slats
                     'b_slat_b_wing' : 0.0, # Fraction of the wing span occupied by slats
 
                     'c_ail_c_wing' : 0.27, # Fraction of the wing chord occupied by aileron
                     'b_ail_b_wing' : 0.34, # Fraction of the wing span occupied by aileron
-                    
+                        
                     'h_ground' : 35.0*ft2m, # Distance to the ground for ground effect computation [m]
                     'k_exc_drag' : 0.03, # Excrescence drag factor
 
                     'winglet' : False, # Add winglet
-                    
+                        
                     'altitude_takeoff' : 0.0, # Altitude for takeoff computation [m] - From Obert's paper
                     'distance_takeoff' : 2050.0, # Required takeoff distance [m] - From Obert's paper
-                    'deltaISA_takeoff' : 15.0, # Variation from ISA standard temperature [ºC] - From Obert's paper
-                    
+                    'deltaISA_takeoff' : 15.0, # Variation from ISA standard temperature [ C] - From Obert's paper
+                        
                     'altitude_landing' : 0.0, # Altitude for landing computation [m]
                     'distance_landing' : 1340.0, # Required landing distance [m]
-                    'deltaISA_landing' : 0.0, # Variation from ISA standard temperature [ºC]
+                    'deltaISA_landing' : 0.0, # Variation from ISA standard temperature [ C]
                     'MLW_frac' : 40100/43090, # Max Landing Weight / Max Takeoff Weight - From Obert's paper
-                    
+                        
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m] - From Obert's paper
                     'Mach_cruise' : 0.73, # Cruise Mach number - From Obert's paper
                     'range_cruise' : 1310*nm2m, # Cruise range [m] - From Obert's paper
 
                     'altitude_maxcruise' : 35000*ft2m, # Altitude for high-speed cruise [m]
                     'Mach_maxcruise' : 0.77, # Mach for high-speed cruise [m]
-                    
+                        
                     'loiter_time' : 45*60, # Loiter time [s]
-                    
+                        
                     'altitude_altcruise' : 4572, # Alternative cruise altitude [m]
                     'Mach_altcruise' : 0.4, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
-                    
+                        
                     'W_payload' : 107*91*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
-                    
+                        
                     'W_crew' : 5*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
 
@@ -1797,7 +1804,7 @@ def standard_airplane(name='fokker100'):
                     'block_time' : (1.0 + 2*40/60)*3600, # Block time [s]
                     'n_captains' : 1, # Number of captains in flight
                     'n_copilots' : 1, # Number of copilots in flight
-                    
+                        
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
                     'W0_guess' : 40000*gravity # Guess for MTOW
@@ -1851,8 +1858,8 @@ def standard_airplane(name='fokker100'):
                     'n_engines' : 2, # Number of engines
                     'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
-                                'BPR' : 3.04, # Engine bypass ratio
-                                'Cbase' : 0.53/3600, # I adjusted this value by hand to match the fuel weight
+                                'BPR' : 13, # Engine bypass ratio
+                                'Cbase' : 0.70/3600,
                                 },
                     
                     'x_nlg' : 3.7, # Longitudinal position of the nose landing gear [m]
@@ -1902,7 +1909,7 @@ def standard_airplane(name='fokker100'):
                     'Mach_altcruise' : 0.8, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
-                    'W_payload' : 12000*gravity, # Payload weight [N]
+                    'W_payload' : 10000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 5*91*gravity, # Crew weight [N]

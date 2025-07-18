@@ -2,6 +2,9 @@
 # Remember to save this script in the same directory as designTool.py
 
 # IMPORTS
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import designTool as dt
 import numpy as np
 import pprint
