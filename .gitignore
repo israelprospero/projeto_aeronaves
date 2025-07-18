@@ -1,3 +1,5 @@
 *.png
 *.txt
+*.xlsx
+!requirements.txt
 __pycache__
