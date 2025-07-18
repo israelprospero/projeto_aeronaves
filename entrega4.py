@@ -21,7 +21,7 @@ ar_w = np.arange(6.0, 14.0,0.01) # varia o alongamento de 6 a 14 no passo de 0.0
 
 ## Plot
 # W0 vs ar_w
-m.plot_W0_x_ar_w(ar_w, airplane_1, 1)
+#m.plot_W0_x_ar_w(ar_w, airplane_1, 1)
 
 ### WEEK 5 ###
 ## Weight estimation

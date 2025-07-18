@@ -127,40 +127,39 @@ def print_drag_table(CD, dragDict):
     headers = ["Name", "Value", "Value * 10^4", "Value / CD1"]
     print(tabulate(table, headers=headers, floatfmt=".4f"))
 
-def print_fuel_table(airplane):
-    
+def print_fuel_table(airplane, export_excel=False, filename="fuel_table.xlsx"):
     import pandas as pd
-    from tabulate import tabulate
 
-    mfs = airplane['fuel_Mf_breakdown']
-    fuels = airplane['fuel_breakdown']
-    percents = airplane['fuel_percent_breakdown']
-
-    table = []
-    for phase in mfs.keys():
-        mf = mfs[phase]
-        fuel = fuels[phase]
-        percent = percents[phase]
-        table.append([phase, f"{mf:.4f}", f"{fuel:.1f}", f"{percent:.1f}"])
-
-    # Soma total
+    # Dados já completos do dicionário airplane
+    total_used_fuel = airplane['fuel_total_used']
     total_fuel = airplane['fuel_total']
-    total_used = airplane['fuel_total_used']
-
-    table.append(['TOTAL (used)', '-', f"{total_used:.1f}", "100.0"])
-    table.append(['TOTAL (with trapped)', '-', f"{total_fuel:.1f}", "-"])
-
-    headers = ["Mission phase", "Mf", "Fuel consumed [kg]", "% of mission fuel"]
-
-    # Imprimir na tela
-    print(tabulate(table, headers=headers, tablefmt="fancy_grid"))
+    fuel_breakdown = airplane['fuel_breakdown']
+    percent_breakdown = airplane['fuel_percent_breakdown']
+    mf_breakdown = airplane['fuel_Mf_breakdown']
 
     # Criar DataFrame
-    df = pd.DataFrame(table[:-2], columns=headers)
+    df = pd.DataFrame({
+        "Mission phase": list(mf_breakdown.keys()),
+        "Mf": [f"{mf:.4f}" if isinstance(mf, float) else mf for mf in mf_breakdown.values()],
+        "Fuel consumed [kg]": [f"{fuel:.1f}" for fuel in fuel_breakdown.values()],
+        "% of mission fuel": [f"{pct:.1f}" if isinstance(pct, (float, int)) else pct for pct in percent_breakdown.values()]
+    })
 
-    # Exportar para Excel
-    df.to_excel("fuel_breakdown.xlsx", index=False)
-    print("\nTabela exportada para 'fuel_breakdown.xlsx'.")
+    # Adicionar linhas totais
+    df.loc[len(df.index)] = ["TOTAL (used)", "-", f"{total_used_fuel:.1f}", "100.0"]
+    df.loc[len(df.index)] = ["TOTAL (with trapped)", "-", f"{total_fuel:.1f}", "-"]
+
+    # Imprimir tabela
+    from tabulate import tabulate
+    print(tabulate(df.values, headers=df.columns, tablefmt="fancy_grid"))
+
+    # Exportar se solicitado
+    if export_excel:
+        df.to_excel(filename, index=False)
+        print(f"\n✅ Tabela exportada para '{filename}' com sucesso.")
+
+    return df
+
 
 def plot_W0_x_ar_w(ar_w_range, airplane, num):
     

@@ -794,7 +794,6 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     
     altitude_cruise = airplane['altitude_cruise']
     Mach_cruise = airplane['Mach_cruise']
-    
     loiter_time = airplane['loiter_time']
     
     altitude_altcruise = airplane['altitude_altcruise']
@@ -803,126 +802,104 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     
     airplane_type = airplane['type']
     
-    # TSFC computation using engineTSFC function
-    C_cruise,_ = engineTSFC(Mach_cruise, altitude_cruise, airplane)
+    # TSFC computation
+    C_cruise, _ = engineTSFC(Mach_cruise, altitude_cruise, airplane)
     
-    # Mass fractions for Transport Jets (Roskam, J., Aircraft Design. Part I: Preliminary Sizing of Airplanes, Roskam Aviation and Engineering Corporation, Kansas, 1985)
+    # Mission mass fractions (from Roskam)
     Mf_start = 0.990
     Mf_taxi = 0.990
     Mf_takeoff = 0.995
     Mf_climb = 0.980
     Mf_descent = 0.990
     Mf_landing = 0.992
-    
-    # Computation of Mass fraction in cruise (using Breguet equations
+
+    # Cruise
     W_cruise = W0_guess * Mf_start * Mf_taxi * Mf_takeoff * Mf_climb
-    
-    # Atmospheric data
     T, p, rho, mi = atmosphere(altitude_cruise, 288.15)
-    
-    # Velocities
     a_cruise = np.sqrt(gamma_air * R_air * T)
-    
     V_cruise = Mach_cruise * a_cruise
-    
-    # Aerodynamic Coefficients (L/D)
     CL_cruise = 2 * W_cruise / (rho * S_w * V_cruise**2)
-    
     CD_cruise, _, dragDict_cruise = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W0_guess)
+    Mf_cruise = np.exp(-range_cruise * C_cruise * CD_cruise / (V_cruise * CL_cruise))
 
-    Mf_cruise = np.exp( - range_cruise * C_cruise * CD_cruise / (V_cruise * CL_cruise))
-    
-    # Computation of Mass fraction in Loiter  
-    CD0_cruise = dragDict_cruise['CD0']
-    CD0_wave_cruise = dragDict_cruise['CDwave']
-    K_cruise = dragDict_cruise['K']
-        
-    L_D_max = 1 / ( 2* np.sqrt( (CD0_cruise + CD0_wave_cruise) *  K_cruise ) )
-   
-    C_loiter = C_cruise - 0.1/3600
-    
-    Mf_loiter = np.exp(-loiter_time * C_loiter/L_D_max)
-    
-    # Computation of Mass fraction in Alternative Cruise
+    # Loiter
+    CD0 = dragDict_cruise['CD0']
+    CDwave = dragDict_cruise['CDwave']
+    K = dragDict_cruise['K']
+    L_D_max = 1 / (2 * np.sqrt((CD0 + CDwave) * K))
+    C_loiter = C_cruise - 0.1 / 3600
+    Mf_loiter = np.exp(-loiter_time * C_loiter / L_D_max)
+
+    # Alt cruise
     C_altcruise, _ = engineTSFC(Mach_altcruise, altitude_altcruise, airplane)
-  
-    
-    T_alt, p_alt, rho_alt, mi_alt = atmosphere(altitude_altcruise, 288.15)    
+    T_alt, p_alt, rho_alt, mi_alt = atmosphere(altitude_altcruise, 288.15)
     a_altcruise = np.sqrt(gamma_air * R_air * T_alt)
-    
-    V_altcruise = Mach_altcruise * a_altcruise    
-    
+    V_altcruise = Mach_altcruise * a_altcruise
     W_altcruise = W_cruise * Mf_cruise * Mf_loiter * Mf_descent
-    
-    CL_altcruise = 2 * W_altcruise / (rho_alt * S_w * V_altcruise**2)
-    CD_altcruise, _, dragDict_altcruise = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_altcruise, W0_guess)
-    
-    Mf_altcruise = np.exp( - range_altcruise * C_altcruise * CD_altcruise / (V_altcruise * CL_altcruise))
-   
+    CL_alt = 2 * W_altcruise / (rho_alt * S_w * V_altcruise**2)
+    CD_alt, _, _ = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_alt, W0_guess)
+    Mf_altcruise = np.exp(-range_altcruise * C_altcruise * CD_alt / (V_altcruise * CL_alt))
 
-    # Computation of the overall Mass Fraction for the mission
+    # Total Mf for consumed fuel
     Mf = Mf_start * Mf_taxi * Mf_takeoff * Mf_climb * Mf_cruise * Mf_loiter * Mf_descent * Mf_altcruise * Mf_landing
     
-    kf = 1.06 # Factor that considers in-line stuck fuel
+    kf = 1.06  # trapped fuel correction
+    W_fuel = kf * (1 - Mf) * W0_guess  # total fuel (used + trapped)
     
-    W_fuel = kf * (1 - Mf) * W0_guess 
-    
-    W_used_fuel = W_fuel / kf           # total consumido
+    W_used_fuel = W_fuel / kf
     W_trapped_fuel = W_fuel - W_used_fuel
-    Mf_trapped = 1 - (W_trapped_fuel / W0_guess )
-    
-    airplane['Mf_engine_start'] = Mf_start
-    airplane['Mf_taxi'] = Mf_taxi
-    airplane['Mf_takeoff'] = Mf_takeoff
-    airplane['Mf_climb'] = Mf_climb
-    airplane['Mf_cruise'] = Mf_cruise
-    airplane['Mf_loiter'] = Mf_loiter
-    airplane['Mf_descent'] = Mf_descent
-    airplane['Mf_altcruise'] = Mf_altcruise
-    airplane['Mf_landing'] = Mf_landing
-    airplane['Mf_trapped'] = Mf_trapped
-    airplane['Mf_total'] = Mf
+    Mf_trapped = 1 - W_trapped_fuel / W0_guess
+
+    # Store Mfs
+    airplane.update({
+        'Mf_engine_start': Mf_start,
+        'Mf_taxi': Mf_taxi,
+        'Mf_takeoff': Mf_takeoff,
+        'Mf_climb': Mf_climb,
+        'Mf_cruise': Mf_cruise,
+        'Mf_loiter': Mf_loiter,
+        'Mf_descent': Mf_descent,
+        'Mf_altcruise': Mf_altcruise,
+        'Mf_landing': Mf_landing,
+        'Mf_total': Mf,
+        'Mf_trapped': Mf_trapped,
+        'fuel_trapped': W_trapped_fuel / gravity
+    })
 
     return W_fuel, W_cruise
 
 #----------------------------------------
 
 def weight(W0_guess, T0_guess, airplane):
-
-    # Unpacking dictionary
     W_payload = airplane['W_payload']
     W_crew = airplane['W_crew']
     range_cruise = airplane['range_cruise']
-
-    # Set iterator
     delta = 1000
 
     while abs(delta) > 10:
-
-        # We need to call fuel_weight first since it
-        # calls the aerodynamics module to get Swet_f used by
-        # the empty weight function
-        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise=range_cruise, update_Mf_hist=True)
-
+        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise)
         W_empty = empty_weight(W0_guess, T0_guess, airplane)
-
         W0 = W_empty + W_fuel + W_payload + W_crew
-
         delta = W0 - W0_guess
-
         W0_guess = W0
-        
+
     airplane['W0'] = W0
     airplane['W_empty'] = W_empty
     airplane['W_fuel'] = W_fuel
 
+    # Phases (sem 'trapped' por enquanto)
     phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
-              'loiter', 'descent', 'altcruise', 'landing', 'trapped']
+              'loiter', 'descent', 'altcruise', 'landing']
     
     Mfs = [airplane['Mf_' + p] for p in phases]
-    
-    W = W0 / gravity  # [kg]
-    Wfuel = W_fuel / gravity  # [kg]
+
+    W = W0 / gravity
+    Wfuel = W_fuel / gravity
+
+    # Garantir combustível preso em kg
+    W_used = W_fuel / 1.06  # usado
+    fuel_trapped = Wfuel - (W_used / gravity)
+    airplane['fuel_trapped'] = fuel_trapped
 
     airplane['W_gross_total'] = W
     airplane['W_gross_fuel_total'] = Wfuel
@@ -932,21 +909,27 @@ def weight(W0_guess, T0_guess, airplane):
     mf_breakdown = {}
 
     for phase, mf in zip(phases, Mfs):
-        fuel = W * (1 - mf)  # combustível consumido
+        fuel = W * (1 - mf)
         percent = 100 * fuel / Wfuel if Wfuel > 0 else 0
         airplane[f'W_gross_{phase}'] = W
         fuel_breakdown[phase.replace('_', ' ').title()] = fuel
         percent_breakdown[phase.replace('_', ' ').title()] = percent
         mf_breakdown[phase.replace('_', ' ').title()] = mf
-        W *= mf  # aplica Mf para atualizar o peso restante
+        W *= mf
+
+    # Adiciona "Trapped fuel" ao final
+    fuel_breakdown['Trapped fuel'] = fuel_trapped
+    percent_breakdown['Trapped fuel'] = 100 * fuel_trapped / Wfuel
+    mf_breakdown['Trapped fuel'] = airplane['Mf_trapped']
 
     airplane['fuel_breakdown'] = fuel_breakdown
     airplane['fuel_percent_breakdown'] = percent_breakdown
     airplane['fuel_Mf_breakdown'] = mf_breakdown
-    airplane['fuel_total_used'] = sum(v for k, v in fuel_breakdown.items() if k != 'Trapped fuel')
+    airplane['fuel_total_used'] = sum(fuel_breakdown[p] for p in fuel_breakdown if p != 'Trapped fuel')
     airplane['fuel_total'] = Wfuel
 
     return W0, W_empty, W_fuel, Mf_cruise
+
 
 #----------------------------------------
 
