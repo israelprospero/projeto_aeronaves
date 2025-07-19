@@ -866,7 +866,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
         'fuel_trapped': W_trapped_fuel / gravity
     })
 
-    return W_fuel, W_cruise
+    return W_fuel, Mf_cruise, CL_cruise, CD_cruise, C_cruise, L_D_max, C_loiter, CL_alt, CD_alt, C_altcruise
 
 #----------------------------------------
 
@@ -877,7 +877,7 @@ def weight(W0_guess, T0_guess, airplane):
     delta = 1000
 
     while abs(delta) > 10:
-        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise)
+        W_fuel, Mf_cruise, _, _, _, _, _, _, _, _ = fuel_weight(W0_guess, airplane, range_cruise)
         W_empty = empty_weight(W0_guess, T0_guess, airplane)
         W0 = W_empty + W_fuel + W_payload + W_crew
         delta = W0 - W0_guess
@@ -1814,13 +1814,13 @@ def standard_airplane(name='fokker100'):
                     'loiter_time' : 45*60, # Loiter time [s]
                     
                     'altitude_altcruise' : 4572, # Alternative cruise altitude [m]
-                    'Mach_altcruise' : 0.4, # Alternative cruise Mach number
+                    'Mach_altcruise' : 0.5, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 10000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
-                    'W_crew' : 5*91*gravity, # Crew weight [N]
+                    'W_crew' : 4*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
 
                     'block_range' : 400*nm2m, # Block range [m]
@@ -1883,7 +1883,7 @@ def standard_airplane(name='fokker100'):
                     'n_engines' : 2, # Number of engines
                     'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
-                                'BPR' : 13, # Engine bypass ratio
+                                'BPR' : 6, # Engine bypass ratio
                                 'Cbase' : 0.7/3600, # I adjusted this value by hand to match the fuel weight
                                 },
                     
@@ -1931,13 +1931,13 @@ def standard_airplane(name='fokker100'):
                     'loiter_time' : 45*60, # Loiter time [s]
                     
                     'altitude_altcruise' : 4572, # Alternative cruise altitude [m]
-                    'Mach_altcruise' : 0.4, # Alternative cruise Mach number
+                    'Mach_altcruise' : 0.5, # Alternative cruise Mach number
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 10000*gravity, # Payload weight [N]
                     'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
                     
-                    'W_crew' : 5*91*gravity, # Crew weight [N]
+                    'W_crew' : 4*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
 
                     'block_range' : 400*nm2m, # Block range [m]

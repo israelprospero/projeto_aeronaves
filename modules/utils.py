@@ -179,14 +179,27 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     
     # print(ar_w_list)
     # print(W0_list)
-    plt.figure()
-    plt.plot(ar_w_list, W0_list)
-    plt.xlabel('AR_w',fontsize=14)
-    plt.ylabel('W0',fontsize=14)
+    # plt.figure()
+    # plt.plot(ar_w_list, W0_list)
+    # plt.xlabel('AR_w',fontsize=14)
+    # plt.ylabel('W0',fontsize=14)
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.title(f'Airplane {num} - W0 x AR_w')
+    # plt.grid(True)
+    # plt.show()
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
+
+    plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
+    plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
+    plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
+
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-    plt.title(f'Airplane {num} - W0 x AR_w')
-    plt.grid(True)
+    plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
+    plt.tight_layout()
     plt.show()
 
 
