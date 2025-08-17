@@ -279,7 +279,7 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
                                  added here. This number should be less than the
                                  total number of engines.
     
-    highlift_config: 'clean', 'takeoff', or 'landing' -> Configuration of high-lift devices
+    highlift_config: 'clean', 'takeoff', 'landing', or 'approach' -> Configuration of high-lift devices
     
     lg_down: 0 or 1 -> 0 for retraced landing gear or 1 for extended landing gear
     
@@ -461,6 +461,8 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
         delta_lift = 0.75
     elif highlift_config == 'landing':
         delta_lift = 1
+    elif highlift_config == 'approach':
+        delta_lift = 0.8        
     
     Delta_CL_max_flap = 0.9 * delta_cl_max_flap * Sflap__S_w * np.cos(sweep_flap) * delta_lift * c_flap_c_wing/0.3
     
@@ -473,6 +475,9 @@ def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
     elif highlift_config == 'landing':
         CD0_flap = (0.12 * F_flap)/(AR_eff**0.33)
         Delta_e_flap = -0.1
+    elif highlift_config == 'approach':
+        CD0_flap = (0.12 * F_flap)/(AR_eff**0.33)
+        Delta_e_flap = -0.1        
         
     # Leading Edge devices (slats)
     if slat_type is not None:
@@ -962,13 +967,212 @@ def performance(W0, Mf_cruise, airplane):
     altitude_cruise = airplane['altitude_cruise']
     
     Mach_cruise = airplane['Mach_cruise']
+    
+    # CALCULATIONS
+    
+    # TAKE-OFF  --------------------------------------------------------------
+    T,p,rho,mi = atmosphere(altitude_takeoff, 288.15)
+    sigma = rho/1.225 # ratio between the current air density and the sea-level air density
+    altitude = altitude_takeoff
+    Mach = 0.2
+    highlift_config='takeoff'
+    n_engines_failed=0
+    lg_down = 1
+    h_ground_to = h_ground
+    CL = 0.5 # This parameter is not used to estimate CLmax, so any value is okay
+    _, CLmaxTO, _ = aerodynamics(airplane, Mach, altitude, CL, W0,
+                     n_engines_failed, highlift_config, lg_down, h_ground_to)
+    
+    
+    W0_Sw = W0 / S_w
+    T0_W0_to = 0.2387/(sigma * CLmaxTO * distance_takeoff) * W0_Sw
+    T0_to = T0_W0_to * W0
+    
+    # LANDING  ---------------------------------------------------------------
+    T,p,rho,mi = atmosphere(altitude_landing, 288.15)
+    Mach = 0.2
+    #altitude = altitude_takeoff
+    altitude = altitude_landing
+    CL = 0.5
+    n_engines_failed=0
+    highlift_config='landing' 
+    lg_down = 1
+    h_ground_ld = h_ground
+    
+    _, CLmax_ld, _ = aerodynamics(airplane, Mach, altitude, CL, W0,
+                      n_engines_failed, highlift_config,
+                      lg_down, h_ground_ld)
+     
+    # The following variables based on commercial aircraft parameters:
+    hlan = 15.3 #[m]
+    flan = 5/3
+    ag = 0.5 #[m/s^2]
 
+    xlan = 1.52 / ag + 1.69
+    Alan = gravity / (flan * xlan)
+    Blan = -10 * gravity * hlan / xlan
+    # Should we use this value??? (I will ask the teacher)  MLW_frac = 0.84 # Roskam - Tab. 3.3 (Transport Jets)
+    Sw_ld = W0 * MLW_frac /(rho * CLmax_ld * (Alan * distance_landing + Blan))
+    deltaS_wlan = S_w - Sw_ld
+    
+    #CRUISE  ---------------------------------------------------------------
+    W_cruise = W0 * Mf_cruise
+    T,p,rho,mi = atmosphere(altitude_cruise, 288.15)
+    a_cruise = np.sqrt(gamma_air * R_air * T)
+    v_cruise = Mach_cruise * a_cruise
+    CL_cruise = 2 * W_cruise/ (rho * S_w * v_cruise**2)
+    n_engines_failed=0
+    highlift_config='clean'
+    lg_down = 0
+    h_ground_cruise = 0
+    
+    CD_cruise, _, _ = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W_cruise,
+                      n_engines_failed, highlift_config, lg_down, h_ground_cruise)  
+    
+    T_cruise = 1/2 * rho * v_cruise**2 * S_w * CD_cruise
+    _, kTc = engineTSFC(Mach_cruise, altitude_cruise, airplane)
+    T0_cruise = T_cruise / kTc
+    
+    #CLIMB (The generic climb function is just after the current function) ---
+    
+    # (1) FAR 25.111 ------------------------
+    if n_engines == 2:
+        gamma_climb = 0.012
+    elif n_engines == 3:
+        gamma_climb = 0.015
+    elif n_engines == 4:
+        gamma_climb == 0.017
+        
+    kS = 1.2
+    altitude_climb = altitude_takeoff
+    lg_down = 0
+    h_ground_climb = h_ground
+    highlift_config='takeoff'
+    n_engines_failed = 1
+    Mf_climb = 1 # No fuel consumed (assumption)
+    kT = 1
+    
+    T0_1 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
 
+    # (2) FAR 25.121a  ------------------------
+    if n_engines == 2:
+        gamma_climb = 0.000
+    elif n_engines == 3:
+        gamma_climb = 0.003
+    elif n_engines == 4:
+        gamma_climb == 0.005
+        
+    kS = 1.1
+    altitude_climb = altitude_takeoff
+    lg_down = 1
+    h_ground_climb = h_ground
+    highlift_config='takeoff'
+    n_engines_failed = 1
+    Mf_climb = 1 # No fuel consumed (assumption)
+    kT = 1
+    
+    T0_2 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
+
+    # (3) FAR 25.121b  ------------------------
+    if n_engines == 2:
+        gamma_climb = 0.024
+    elif n_engines == 3:
+        gamma_climb = 0.027
+    elif n_engines == 4:
+        gamma_climb == 0.030
+        
+    kS = 1.2
+    altitude_climb = altitude_takeoff
+    lg_down = 0
+    h_ground_climb = 0
+    highlift_config='takeoff'
+    n_engines_failed = 1
+    Mf_climb = 1 # No fuel consumed (assumption)
+    kT = 1
+    
+    T0_3 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
+
+    # (4) FAR 25.121c  ------------------------
+    if n_engines == 2:
+        gamma_climb = 0.012
+    elif n_engines == 3:
+        gamma_climb = 0.015
+    elif n_engines == 4:
+        gamma_climb == 0.017
+        
+    kS = 1.25
+    altitude_climb = altitude_takeoff
+    lg_down = 0
+    h_ground_climb = 0
+    highlift_config='clean'
+    n_engines_failed = 1
+    Mf_climb = 1 # No fuel consumed (assumption)
+    kT = 0.94
+    
+    T0_4 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
+        
+    # (5) FAR 25.119  ------------------------
+    gamma_climb = 0.032
+        
+    kS = 1.3
+    altitude_climb = altitude_landing
+    lg_down = 1
+    h_ground_climb = 0
+    highlift_config='landing'
+    n_engines_failed = 0
+    Mf_climb = MLW_frac
+    kT = 1
+    
+    T0_5 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
+           
+    # (6) FAR 25.121d  ------------------------  
+    if n_engines == 2:
+        gamma_climb = 0.021
+    elif n_engines == 3:
+        gamma_climb = 0.024
+    elif n_engines == 4:
+        gamma_climb == 0.027
+        
+    kS = 1.4
+    altitude_climb = altitude_landing
+    lg_down = 1
+    h_ground_climb = 0
+    highlift_config='approach'
+    n_engines_failed = 1
+    Mf_climb =  MLW_frac
+    kT = 1
+    
+    T0_6 = climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w)
+    
+    # OUTPUTS
     # Get the maximum required thrust with a 5% margin
     T0vec = [T0_to, T0_cruise, T0_1, T0_2, T0_3, T0_4, T0_5, T0_6]
     T0 = 1.05*max(T0vec)
 
     return T0, T0vec, deltaS_wlan, CLmaxTO
+
+def climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_climb, highlift_config, n_engines_failed, Mf_climb, kT, W0, S_w):
+    n_engines = airplane['n_engines'] 
+    T,p,rho,mi = atmosphere(altitude_climb, 288.15)
+    a_climb = np.sqrt(gamma_air * R_air * T)
+    
+    Mach = 0.2 # Not used to estimate CLmax
+    CL = 0.2 # Not used to estimate CLmax
+    _, CLmax_climb, _ = aerodynamics(airplane, Mach, altitude_climb, CL, W0,
+                     n_engines_failed, highlift_config,
+                     lg_down, h_ground_climb)
+    
+    CL_climb = CLmax_climb / kS**2
+    v_climb = np.sqrt(2 * W0 * Mf_climb / (rho * S_w * CL_climb))
+    Mach_climb = v_climb / a_climb
+    
+    CD_climb, _, _ = aerodynamics(airplane, Mach_climb, altitude_climb, CL_climb, W0,
+                      n_engines_failed, highlift_config, lg_down, h_ground_climb)
+    
+    T0_W_climb = n_engines / (n_engines - n_engines_failed) * (gamma_climb + CD_climb / CL_climb)
+    T0_climb = T0_W_climb * W0 * Mf_climb / kT
+    
+    return T0_climb
 
 #----------------------------------------
 
