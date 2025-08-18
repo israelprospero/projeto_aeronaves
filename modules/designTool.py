@@ -959,9 +959,11 @@ def performance(W0, Mf_cruise, airplane):
     
     altitude_takeoff = airplane['altitude_takeoff']
     distance_takeoff = airplane['distance_takeoff']
+    deltaISA_takeoff = airplane['deltaISA_takeoff']
     
     altitude_landing = airplane['altitude_landing']
     distance_landing = airplane['distance_landing']
+    deltaISA_landing = airplane['deltaISA_landing']
     MLW_frac = airplane['MLW_frac']
     
     altitude_cruise = airplane['altitude_cruise']
@@ -971,7 +973,7 @@ def performance(W0, Mf_cruise, airplane):
     # CALCULATIONS
     
     # TAKE-OFF  --------------------------------------------------------------
-    T,p,rho,mi = atmosphere(altitude_takeoff, 288.15)
+    T,p,rho,mi = atmosphere(altitude_takeoff, 288.15 + deltaISA_takeoff)
     sigma = rho/1.225 # ratio between the current air density and the sea-level air density
     altitude = altitude_takeoff
     Mach = 0.2
@@ -989,7 +991,7 @@ def performance(W0, Mf_cruise, airplane):
     T0_to = T0_W0_to * W0
     
     # LANDING  ---------------------------------------------------------------
-    T,p,rho,mi = atmosphere(altitude_landing, 288.15)
+    T,p,rho,mi = atmosphere(altitude_landing, 288.15 + deltaISA_landing)
     Mach = 0.2
     #altitude = altitude_takeoff
     altitude = altitude_landing
@@ -1137,7 +1139,7 @@ def performance(W0, Mf_cruise, airplane):
     altitude_climb = altitude_landing
     lg_down = 1
     h_ground_climb = 0
-    highlift_config='approach'
+    highlift_config='takeoff'
     n_engines_failed = 1
     Mf_climb =  MLW_frac
     kT = 1
