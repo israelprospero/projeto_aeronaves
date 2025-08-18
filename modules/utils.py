@@ -168,14 +168,18 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     
     ar_w_list = []
     W0_list = []
+    Wempty_list = []
+    Wfuel_list = []
     
     for k in ar_w_range:
         airplane['AR_w'] = k
         dt.geometry(airplane) # chama a função geometry para atualizar  geometria do avião com o novo ar_w antes de chamar a função 'W0'
         ar_w_list.append(k)   
         
-        W0, _, _, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
+        W0, W_empty, W_fuel, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
         W0_list.append(W0)
+        Wempty_list.append(W_empty)
+        Wfuel_list.append(W_fuel)
     
     # print(ar_w_list)
     # print(W0_list)
@@ -190,72 +194,65 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     # plt.show()
     
     plt.figure(figsize=(10, 6))
-    plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
-
+    plt.plot(ar_w_list, W0_list, color='navy', linewidth=2, label='W0')
+    plt.plot(ar_w_list, Wempty_list, linewidth=2, label='W_empty')
+    plt.plot(ar_w_list, Wfuel_list, linewidth=2, label='W_fuel')
+    plt.legend()
     plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
-    plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
-    plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
-
+    plt.ylabel('Weights [N]', fontsize=16, fontweight='bold')
+    # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
     plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
     plt.tight_layout()
     plt.show()
+    
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
+    # plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
+    # plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
+    # # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
+    # plt.tight_layout()
+    # plt.show()
 
 
-'''
-def weight(W0_guess, T0_guess, airplane):
-
-    # Unpacking dictionary
-    W_payload = airplane['W_payload']
-    W_crew = airplane['W_crew']
-    range_cruise = airplane['range_cruise']
-
-    # Set iterator
-    delta = 1000
-
-    while abs(delta) > 10:
-
-        # We need to call fuel_weight first since it
-        # calls the aerodynamics module to get Swet_f used by
-        # the empty weight function
-        W_fuel, Mf_cruise = fuel_weight(W0_guess, airplane, range_cruise=range_cruise, update_Mf_hist=True)
-
-        W_empty = empty_weight(W0_guess, T0_guess, airplane)
-
-        W0 = W_empty + W_fuel + W_payload + W_crew
-
-        delta = W0 - W0_guess
-
-        W0_guess = W0
+def plot_T0_x_Sw(airplane, Swvec):
+    
+    T0plot = []
+    for Sw in Swvec:
+        airplane['S_w'] = Sw
+        dt.geometry(airplane)
         
-    airplane['W0'] = W0
-    airplane['W_empty'] = W_empty
-    airplane['W_fuel'] = W_fuel
+        dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+        T0plot.append(airplane['T0vec'])
+        
+        # print(airplane['T0vec'])
+        # print('\n')
+        
+    names = [
+        "T0_takeoff",
+        "T0_cruise",
+        "T0_FAR25.111",
+        "T0_FAR25.121a",
+        "T0_FAR25.121b",
+        "T0_FAR25.121c",
+        "T0_FAR25.119",
+        "T0_FAR25.121d"
+    ]
 
-    # Calcular pesos brutos por fase
-    phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
-              'loiter', 'descent', 'altcruise', 'landing', 'trapped']
+    print(len(airplane['T0vec']))
     
-    Mfs = [airplane['Mf_' + p] for p in phases]
-    
-    W = W0/gravity
-    Wfuel = W_fuel/gravity
-    airplane['W_gross_total'] = W
-    airplane['W_gross_fuel_total'] = Wfuel
-    for phase, mf in zip(phases, Mfs):
-        W_spent = W*((1 - mf))
-        airplane[f'W_gross_{phase}'] = W_spent  # em kg
-        W = W - W_spent
-
-    # Calcular combustíveis consumidos
-    fuel_breakdown = {}
-    total_used_fuel = 0
-
-    for phase, mf in zip(phases, Mfs):
-        fuel = W0 * mf / gravity
-        fuel_breakdown[phase.replace('_', ' ').title()] = fuel
-        total_used_fuel += fuel
-
-    return W0, W_empty, W_fuel, Mf_cruise
-'''
+    plt.figure()
+    for i in range(8):
+        first_terms = [lst[i] for lst in T0plot]
+        plt.plot(Swvec, first_terms, label=f'{names[i]}')
+        # print(first_terms)
+    plt.axvline(x=airplane['deltaS_wlan'], color='r', linestyle='--', linewidth=2, label = 'landing')
+    plt.legend()
+    plt.xlabel('S_w (m^2)')
+    plt.ylabel('T0 (N)')
+    plt.show()
+        
