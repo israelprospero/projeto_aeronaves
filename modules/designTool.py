@@ -2038,7 +2038,10 @@ def standard_airplane(name='fokker100'):
 
                     'W0_guess' : 50150*gravity, # Guess for MTOW
                     'T0_guess' : 0.3*50150*gravity, # 30% OF W0_GUES!!!!!!!!
-                    'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
+                    'MLW_frac' : 0.85, # Max Landing Weight / Max Takeoff Weight
+                    
+                    'deltaISA_takeoff' : 15.0,
+                    'deltaISA_landing' : 0.0
                     }
         
     elif name == 'my_airplane_2':
@@ -2155,7 +2158,10 @@ def standard_airplane(name='fokker100'):
 
                     'W0_guess' : 49200*gravity, # Guess for MTOW
                     'T0_guess' : 0.3*49200*gravity, # 30% OF W0_GUES!!!!!!!!
-                    'MLW_frac' : 0.85 # Max Landing Weight / Max Takeoff Weight
+                    'MLW_frac' : 0.85, # Max Landing Weight / Max Takeoff Weight
+                    
+                    'deltaISA_takeoff' : 15.0,
+                    'deltaISA_landing' : 0.0
                     }
     
 

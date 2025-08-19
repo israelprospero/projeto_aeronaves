@@ -243,10 +243,11 @@ def plot_T0_x_Sw(airplane, Swvec):
         "T0_FAR25.121d"
     ]
 
-    print(len(airplane['T0vec']))
+    # print(len(airplane['T0vec']))
     
     plt.figure()
     for i in range(8):
+        print(i)
         first_terms = [lst[i] for lst in T0plot]
         plt.plot(Swvec, first_terms, label=f'{names[i]}')
         # print(first_terms)
