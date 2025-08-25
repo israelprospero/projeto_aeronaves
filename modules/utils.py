@@ -256,4 +256,113 @@ def plot_T0_x_Sw(airplane, Swvec):
     plt.xlabel('S_w (m^2)')
     plt.ylabel('T0 (N)')
     plt.show()
+
+def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v):
+    # Lista para armazenar resultados
+    results = []
+
+    plt.figure(figsize=(8,6))
+
+    # Loop sobre cada enflechamento
+    for sweep_wing in sweep_wing_v:
+        W0plot = []  # reinicia para cada curva
+        airplane['sweep_w'] = sweep_wing
+        dt.geometry(airplane)
+
+        # Loop sobre cada área de asa
+        for Sw in Swvec:
+            airplane['S_w'] = Sw
+            dt.geometry(airplane)
+
+            dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+            W0 = airplane['W0']/1000  # em kN
+            W0plot.append(W0)
+
+            # salva no banco de dados
+            results.append({
+                "Sweep": sweep_wing,
+                "S_w": Sw,
+                "W0": W0
+            })
+            
+        # Plota uma curva para cada sweep
+        plt.plot(Swvec, W0plot, label=f"Sweep = {round(sweep_wing*180/np.pi,1)}°")
+    
+    plt.legend()
+    plt.xlabel('S_w (m²)')
+    plt.ylabel('W0 (kN)')
+    plt.title('MTOW vs Sw para diferentes enflechamentos')
+    plt.grid(True)
+    plt.show()
+
+    # Converte resultados em DataFrame
+    df = pd.DataFrame(results)
+    return df
         
+
+# def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, slat_type_v):
+#     results = []
+
+#     plt.figure(figsize=(8,6))
+
+#     # Loop sobre cada enflechamento
+#     for sweep_wing in sweep_wing_v:
+#         airplane['sweep_w'] = sweep_wing
+#         dt.geometry(airplane)
+
+#         # Loop sobre cada config de flap
+#         for flap_type in flap_type_v:
+#             airplane['flap_type'] = flap_type
+#             dt.geometry(airplane)
+
+#             # Loop sobre cada config de slat
+#             for slat_type in slat_type_v:
+#                 airplane['slat_type'] = slat_type
+#                 dt.geometry(airplane)
+
+#                 W0plot = []
+#                 Sw_valid = []  # guarda apenas Sw válidos
+
+#                 # Loop sobre cada área de asa
+#                 for Sw in Swvec:
+#                     airplane['S_w'] = Sw
+#                     dt.geometry(airplane)
+
+#                     try:
+#                         dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+#                         W0 = airplane['W0'] / 1000.0  # kN
+
+#                         # só aceita valores finitos e positivos
+#                         if np.isfinite(W0) and W0 > 0:
+#                             W0plot.append(W0)
+#                             Sw_valid.append(Sw)
+
+#                             results.append({
+#                                 "Sweep_deg": sweep_wing*180/np.pi,
+#                                 "Flap": flap_type,
+#                                 "Slat": slat_type,
+#                                 "S_w": Sw,
+#                                 "W0": W0
+#                             })
+#                     except Exception as e:
+#                         # se der erro numérico, simplesmente ignora este ponto
+#                         continue
+        
+#                 # Plota apenas se houver pontos válidos
+#                 if len(W0plot) > 0:
+#                     plt.plot(Sw_valid, W0plot)
+    
+
+# #label=f"Sweep = {sweep_wing*180/np.pi:.1f}° | Flap = {flap_type} | Slat = {slat_type}    
+
+#     plt.legend(fontsize=6)
+#     plt.xlabel('S_w (m²)')
+#     plt.ylabel('W0 (kN)')
+#     plt.title('MTOW vs Área da Asa (Sw)\npara diferentes enflechamentos e dispositivos de alta sustentação')
+#     plt.grid(True)
+#     plt.show()
+
+#     df = pd.DataFrame(results)
+#     return df
+
+
