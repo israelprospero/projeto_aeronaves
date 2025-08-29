@@ -257,20 +257,185 @@ def plot_T0_x_Sw(airplane, Swvec):
     plt.ylabel('T0 (N)')
     plt.show()
 
-def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v):
+def plot_W0_x_ar_w(ar_w_range, airplane, num):
+    
+    ar_w_list = []
+    W0_list = []
+    Wempty_list = []
+    Wfuel_list = []
+    
+    for k in ar_w_range:
+        airplane['AR_w'] = k
+        dt.geometry(airplane) # chama a função geometry para atualizar  geometria do avião com o novo ar_w antes de chamar a função 'W0'
+        ar_w_list.append(k)   
+        
+        W0, W_empty, W_fuel, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
+        W0_list.append(W0)
+        Wempty_list.append(W_empty)
+        Wfuel_list.append(W_fuel)
+    
+    # print(ar_w_list)
+    # print(W0_list)
+    # plt.figure()
+    # plt.plot(ar_w_list, W0_list)
+    # plt.xlabel('AR_w',fontsize=14)
+    # plt.ylabel('W0',fontsize=14)
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.title(f'Airplane {num} - W0 x AR_w')
+    # plt.grid(True)
+    # plt.show()
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(ar_w_list, W0_list, color='navy', linewidth=2, label='W0')
+    plt.plot(ar_w_list, Wempty_list, linewidth=2, label='W_empty')
+    plt.plot(ar_w_list, Wfuel_list, linewidth=2, label='W_fuel')
+    plt.legend()
+    plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
+    plt.ylabel('Weights [N]', fontsize=16, fontweight='bold')
+    # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+    
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
+    # plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
+    # plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
+    # # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
+    # plt.xticks(fontsize=14)
+    # plt.yticks(fontsize=14)
+    # plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
+    # plt.tight_layout()
+    # plt.show()
+
+
+def plot_T0_x_Sw(airplane, Swvec):
+    
+    T0plot = []
+    for Sw in Swvec:
+        airplane['S_w'] = Sw
+        dt.geometry(airplane)
+        
+        dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+        T0plot.append(airplane['T0vec'])
+        
+        # print(airplane['T0vec'])
+        # print('\n')
+        
+    names = [
+        "T0_takeoff",
+        "T0_cruise",
+        "T0_FAR25.111",
+        "T0_FAR25.121a",
+        "T0_FAR25.121b",
+        "T0_FAR25.121c",
+        "T0_FAR25.119",
+        "T0_FAR25.121d"
+    ]
+
+    # print(len(airplane['T0vec']))
+    
+    plt.figure()
+    for i in range(8):
+        print(i)
+        first_terms = [lst[i] for lst in T0plot]
+        plt.plot(Swvec, first_terms, label=f'{names[i]}')
+        # print(first_terms)
+    plt.axvline(x=airplane['deltaS_wlan'], color='r', linestyle='--', linewidth=2, label = 'landing')
+    plt.legend()
+    plt.xlabel('S_w (m^2)')
+    plt.ylabel('T0 (N)')
+    plt.show()
+
+def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v):
     # Lista para armazenar resultados
     results = []
 
-    plt.figure(figsize=(8,6))
+    sweep_deg_v = sweep_wing_v * 180/np.pi
 
-    # Loop sobre cada enflechamento
-    for sweep_wing in sweep_wing_v:
-        W0plot = []  # reinicia para cada curva
-        airplane['sweep_w'] = sweep_wing
+    figs = []
+
+    # Loop sobre cada config de flap
+    for flap_type in flap_type_v:
+        airplane['flap_type'] = flap_type
         dt.geometry(airplane)
 
-        # Loop sobre cada área de asa
-        for Sw in Swvec:
+        # Loop para coletar os resultados
+        for sweep_deg, sweep_wing in zip(sweep_deg_v, sweep_wing_v):
+            W0plot = []  # reinicia para cada curva
+            airplane['sweep_w'] = sweep_wing
+            dt.geometry(airplane)
+
+            # Loop sobre cada área de asa
+            for Sw in Swvec:
+                airplane['S_w'] = Sw
+                dt.geometry(airplane)
+
+                dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+                W0 = airplane['W0']/1000  # em kN
+                W0plot.append(W0)
+
+                # salva no banco de dados
+                results.append({
+                    "Flap_type": flap_type,
+                    "Sweep": sweep_deg,
+                    "S_w": Sw,
+                    "W0": W0
+                })
+            
+        # Converte resultados em DataFrame
+        df = pd.DataFrame(results)
+
+        # Extrair sweeps únicos dessa config
+        sweep_values = df[df["Flap_type"] == flap_type]["Sweep"].unique()
+
+        # Definir colormap para diferenciar sweeps
+        cmap = cm.plasma  
+        norm = mcolors.Normalize(vmin=min(sweep_values), vmax=max(sweep_values))
+
+        # Criar figura + eixo
+        fig, ax = plt.subplots(figsize=(10,8))
+
+        # Plotar curvas
+        for sweep_deg in sweep_values:
+            df_sub = df[(df["Flap_type"] == flap_type) & (df["Sweep"] == sweep_deg)].sort_values("S_w")
+            ax.plot(df_sub["S_w"], df_sub["W0"], color=cmap(norm(sweep_deg)))
+
+        # Barra de cores em vez de legenda
+        sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax)
+        cbar.set_label("Enflechamento da asa (°)")
+
+        # Configurações do gráfico
+        ax.set_xlabel("Área da asa $S_w$ (m²)")
+        ax.set_ylabel("W0 (kN)")
+        ax.set_title(f"MTOW vs Área da asa para configuração de flap {flap_type}")
+        ax.grid(True)
+        ax.set_xlim(40, 160)
+        ax.set_ylim(420, 570)
+
+        figs.append(fig)
+
+    plt.show()
+
+    # Converte resultados em DataFrame
+    df = pd.DataFrame(results)
+    return df
+
+def plot_W0_x_sweep(airplane, Swvec, sweep_wing_v):
+    # Lista para armazenar resultados
+    results = []
+
+    # Loop sobre cada área de asa
+    for Sw in Swvec:
+        W0plot = []
+        # Loop sobre cada enflechamento
+        for sweep_wing in sweep_wing_v:
+            airplane['sweep_w'] = sweep_wing
             airplane['S_w'] = Sw
             dt.geometry(airplane)
 
@@ -280,89 +445,44 @@ def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v):
 
             # salva no banco de dados
             results.append({
-                "Sweep": sweep_wing,
+                "Sweep": sweep_wing*180/np.pi,
                 "S_w": Sw,
                 "W0": W0
             })
-            
-        # Plota uma curva para cada sweep
-        plt.plot(Swvec, W0plot, label=f"Sweep = {round(sweep_wing*180/np.pi,1)}°")
-    
-    plt.legend()
-    plt.xlabel('S_w (m²)')
-    plt.ylabel('W0 (kN)')
-    plt.title('MTOW vs Sw para diferentes enflechamentos')
-    plt.grid(True)
-    plt.show()
+                
 
     # Converte resultados em DataFrame
     df = pd.DataFrame(results)
-    return df
-        
 
-# def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, slat_type_v):
-#     results = []
-
-#     plt.figure(figsize=(8,6))
-
-#     # Loop sobre cada enflechamento
-#     for sweep_wing in sweep_wing_v:
-#         airplane['sweep_w'] = sweep_wing
-#         dt.geometry(airplane)
-
-#         # Loop sobre cada config de flap
-#         for flap_type in flap_type_v:
-#             airplane['flap_type'] = flap_type
-#             dt.geometry(airplane)
-
-#             # Loop sobre cada config de slat
-#             for slat_type in slat_type_v:
-#                 airplane['slat_type'] = slat_type
-#                 dt.geometry(airplane)
-
-#                 W0plot = []
-#                 Sw_valid = []  # guarda apenas Sw válidos
-
-#                 # Loop sobre cada área de asa
-#                 for Sw in Swvec:
-#                     airplane['S_w'] = Sw
-#                     dt.geometry(airplane)
-
-#                     try:
-#                         dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
-#                         W0 = airplane['W0'] / 1000.0  # kN
-
-#                         # só aceita valores finitos e positivos
-#                         if np.isfinite(W0) and W0 > 0:
-#                             W0plot.append(W0)
-#                             Sw_valid.append(Sw)
-
-#                             results.append({
-#                                 "Sweep_deg": sweep_wing*180/np.pi,
-#                                 "Flap": flap_type,
-#                                 "Slat": slat_type,
-#                                 "S_w": Sw,
-#                                 "W0": W0
-#                             })
-#                     except Exception as e:
-#                         # se der erro numérico, simplesmente ignora este ponto
-#                         continue
-        
-#                 # Plota apenas se houver pontos válidos
-#                 if len(W0plot) > 0:
-#                     plt.plot(Sw_valid, W0plot)
+    # Extrai vetores
+    Sw_values = df["S_w"].unique()
     
+    # Define colormap
+    cmap = cm.viridis  # pode trocar por 'plasma', 'coolwarm', etc
+    norm = mcolors.Normalize(vmin=min(Sw_values), vmax=max(Sw_values))
 
-# #label=f"Sweep = {sweep_wing*180/np.pi:.1f}° | Flap = {flap_type} | Slat = {slat_type}    
+    # Cria figura + eixo
+    fig, ax = plt.subplots(figsize=(10,6))
 
-#     plt.legend(fontsize=6)
-#     plt.xlabel('S_w (m²)')
-#     plt.ylabel('W0 (kN)')
-#     plt.title('MTOW vs Área da Asa (Sw)\npara diferentes enflechamentos e dispositivos de alta sustentação')
-#     plt.grid(True)
-#     plt.show()
+    # Plota cada curva Sw com cor do colormap
+    for Sw in Sw_values:
+        df_sub = df[df["S_w"] == Sw].sort_values("Sweep")  # garantir ordem
+        W0plot = df_sub["W0"].values
+        sweep = df_sub["Sweep"].values
+        ax.plot(sweep, W0plot, color=cmap(norm(Sw)))
 
-#     df = pd.DataFrame(results)
-#     return df
+    # Adiciona barra de cores no lugar da legenda
+    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, ax=ax)
+    cbar.set_label("Área da asa $S_w$ (m²)")
 
+    ax.set_xlabel('Enflechamento (°)')
+    ax.set_ylabel('W0 (kN)')
+    ax.set_title('MTOW vs Enflechamento para diferentes Áreas de asa')
+    ax.grid(True)
+    
+    plt.show()
+
+    return df
 
