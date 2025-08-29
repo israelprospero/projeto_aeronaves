@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from modules import designTool as dt
 import numpy as np
 from tabulate import tabulate
+import pandas as pd
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
 
 H1 = 10700
 H2 = 10700
