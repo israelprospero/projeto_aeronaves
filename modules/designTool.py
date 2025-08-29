@@ -626,8 +626,8 @@ def engineTSFC(Mach, altitude, airplane):
     
     C = Cbase*(1 - 0.15*BPR**0.65) * (1 + 0.28 * (1 + 0.063*BPR**2) * Mach) * sigma**(0.08)
     
-    kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
-
+    # kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
+    kT = 0.25        
     return C, kT
 
 #----------------------------------------
