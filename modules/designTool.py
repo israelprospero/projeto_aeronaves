@@ -1214,6 +1214,8 @@ def thrust_matching(W0_guess, T0_guess, airplane):
 def balance(airplane):
 
     # Unpack dictionary
+    
+    # Weight parameters
     W0 = airplane['W0']
     W_payload = airplane['W_payload']
     xcg_payload = airplane['xcg_payload']
@@ -1223,8 +1225,10 @@ def balance(airplane):
     xcg_empty = airplane['xcg_empty']
     W_fuel = airplane['W_fuel']
     
+    # Cruise parameter
     Mach_cruise = airplane['Mach_cruise']
     
+    # Wing geometric parameters
     S_w = airplane['S_w']
     AR_eff = airplane['AR_eff']
     taper_w = airplane['taper_w']
@@ -1239,6 +1243,7 @@ def balance(airplane):
     tcr_w = airplane['tcr_w']
     tct_w = airplane['tct_w']
     
+    # Horizontal tail geometric parameters
     S_h = airplane['S_h']
     AR_h = airplane['AR_h']
     sweep_h = airplane['sweep_h']
@@ -1251,27 +1256,90 @@ def balance(airplane):
     eta_h = airplane['eta_h']
     Lc_h = airplane['Lc_h']
     
+    # Vertical tailgeometric parameter
     Cvt = airplane['Cvt']
     
+    # Fuselage parameters
     L_f = airplane['L_f']
     D_f = airplane['D_f']
     
+    # Nacelle parameter
     y_n = airplane['y_n']
     
+    # Engine parameters
     T0 = airplane['T0']
     n_engines = airplane['n_engines']
 
+    # Fuel tank parameters
     c_tank_c_w = airplane['c_tank_c_w']
     x_tank_c_w = airplane['x_tank_c_w']
     b_tank_b_w_start = airplane['b_tank_b_w_start']
     b_tank_b_w_end = airplane['b_tank_b_w_end']
 
+    # Fuel parameter
     rho_fuel = airplane['rho_fuel']
     
+    # Aerodynamics parameter
     CLmaxTO = airplane['CLmaxTO']
 
+    # Calculations
+    
+    # Fuel tank Center of Gravity
+    V_maxfuel, W_maxfuel, xcg_fuel, ycg_fuel = tank_properties(cr_w, ct_w, tcr_w, tct_w, b_w, sweep_w, xr_w, x_tank_c_w, c_tank_c_w, b_tank_b_w_start, b_tank_b_w_end, rho_fuel, gravity)
+    tank_excess = W_maxfuel / W_fuel - 1
+    # Center of gravity variation
+        
+        # Load Scenarios
+        # 1. Empty airplane
+        # 2. Crew
+        # 3. Payload and crew
+        # 4. Fuel and crew
+        # 5. Payload, crew, and fuel (MTOW)
 
-    # Update dictionary
+    xcg_1 = xcg_empty
+    xcg_2 = (W_empty * xcg_empty + W_crew * xcg_crew) / (W_empty + W_crew)
+    xcg_3 = (W_empty * xcg_empty + W_crew * xcg_crew + W_payload * xcg_payload) / (W_empty + W_crew + W_payload)
+    xcg_4 = (W_empty * xcg_empty + W_crew * xcg_crew + W_fuel * xcg_fuel) / (W_empty + W_crew + W_fuel)
+    xcg_5 = (W_empty * xcg_empty + W_crew * xcg_crew + W_payload * xcg_payload + W_fuel * xcg_fuel) / W0
+               
+    xcg_fwd = min(xcg_1, xcg_2, xcg_3, xcg_4, xcg_5) - 0.02 * cm_w
+    xcg_aft = max(xcg_1, xcg_2, xcg_3, xcg_4, xcg_5) + 0.02 * cm_w
+    
+    # Neutral Point
+    
+    # Wing Aerodynamic Center
+    sweep_maxt_w = geo_change_sweep(0.25, 0.40,sweep_w, b_w/2, cr_w, ct_w)
+    beta = np.sqrt(1 - Mach_cruise**2)
+    CL_alpha_w = 2 * np.pi * AR_eff / (2 + np.sqrt(4 + (AR_eff * beta / 0.95)**2 * (1 + (np.tan(sweep_maxt_w)/beta)**2 ) ) )
+    CL_alpha_w_M0 = 2 * np.pi * AR_eff / (2 + np.sqrt(4 + (AR_eff / 0.95)**2 * (1 + np.tan(sweep_maxt_w)**2 ) ) )
+    xac_w = xm_w + cm_w/4
+    
+    # Wing-Fuselage Aerodynamic Center
+    Kf = 0.1462 * np.exp(4.8753 * (xr_w + 0.25 * cm_w) / L_f ) 
+    CM_alpha_f = (Kf * D_f**2 * L_f) / (cm_w * S_w) 
+    CL_alpha_wf = 0.98 * CL_alpha_w
+    xac_wf = xac_w - CM_alpha_f / CL_alpha_wf * cm_w
+    
+    # Horizontal tail Aerodynamic Center
+    sweep_maxt_h = geo_change_sweep(0.25, 0.40,sweep_h, b_h/2, cr_h, ct_h)
+    CL_alpha_h = 2 * np.pi * AR_h / (2 + np.sqrt(4 + (AR_h * beta / 0.95)**2 * (1 + (np.tan(sweep_maxt_h)/beta)**2 ) ) )
+    xac_h = xm_h + cm_h/4
+    Lh = xac_h - xac_w
+    k_A = 1/AR_eff - 1/(1 + AR_eff**1.7)
+    k_lambda = (10 - 3 * taper_w) / 7
+    k_h = (1 - abs((zm_h - zr_w)/b_w)) / (2*Lh/b_w)**(1/3)
+    deps_dalpha  = 4.44 * (k_A * k_lambda * k_h * np.sqrt( np.cos(sweep_w))) ** 1.19 * CL_alpha_w / CL_alpha_w_M0
+    xnp = (CL_alpha_wf * xac_wf + eta_h * S_h / S_w * CL_alpha_h * (1 - deps_dalpha) * xac_h ) / (CL_alpha_wf + eta_h * S_h / S_w * CL_alpha_h * (1 - deps_dalpha) )
+    
+    # Static Margin
+    SM_fwd = (xnp - xcg_fwd) / cm_w 
+    SM_aft = (xnp - xcg_aft) / cm_w 
+    
+    # Vertical tail lift for OEI takeoff condition
+    ks = 1.2/1.1
+    CLv = (y_n / b_w) * (CLmaxTO / ks ** 2) * T0 / (W0 * n_engines * Cvt)
+    
+    # Updated dictionary
     airplane['xcg_fwd'] = xcg_fwd
     airplane['xcg_aft'] = xcg_aft
     airplane['xnp'] = xnp
