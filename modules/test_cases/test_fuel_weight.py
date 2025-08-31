@@ -21,7 +21,7 @@ W0_guess = 467500.00000000000000
 range_cruise = 2426120.00000000000000
 
 # Execute the fuel weight estimation
-W_fuel, W_cruise = dt.fuel_weight(W0_guess, airplane, range_cruise)
+W_fuel, W_cruise, _, _, _, _, _, _, _, _ = dt.fuel_weight(W0_guess, airplane, range_cruise)
 
 # Print results and updated dicionary
 print("W_fuel = ",W_fuel)

@@ -2,6 +2,9 @@
 # Remember to save this script in the same directory as designTool.py
 
 # IMPORTS
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import designTool as dt
 import numpy as np
 import pprint
@@ -13,12 +16,12 @@ airplane = dt.standard_airplane('fokker100')
 dt.geometry(airplane)
 
 # Guess values for initial iteration
-W0 = 467500.00000000000000
+W0_guess = 467500.00000000000000
 W_cruise = 446787.65092499996535
-Mf_cruise = W_cruise / W0
+Mf_cruise = W_cruise / W0_guess
 
 # Execute the weight estimation
-T0, T0vec, deltaS_wlan, CLmaxTO = dt.performance(W0, Mf_cruise, airplane)
+T0, T0vec, deltaS_wlan, CLmaxTO = dt.performance(W0_guess, Mf_cruise, airplane)
 
 # Print results
 print("T0 = ",T0)

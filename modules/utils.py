@@ -315,14 +315,14 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     # plt.show()
 
 
-def plot_T0_x_Sw(airplane, Swvec):
+def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess):
     
     T0plot = []
     for Sw in Swvec:
         airplane['S_w'] = Sw
         dt.geometry(airplane)
         
-        dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+        dt.thrust_matching(W0_guess, T0_guess, airplane)
         T0plot.append(airplane['T0vec'])
         
         # print(airplane['T0vec'])
@@ -343,7 +343,7 @@ def plot_T0_x_Sw(airplane, Swvec):
     
     plt.figure()
     for i in range(8):
-        print(i)
+        # print(i)
         first_terms = [lst[i] for lst in T0plot]
         plt.plot(Swvec, first_terms, label=f'{names[i]}')
         # print(first_terms)
@@ -351,9 +351,10 @@ def plot_T0_x_Sw(airplane, Swvec):
     plt.legend()
     plt.xlabel('S_w (m^2)')
     plt.ylabel('T0 (N)')
+    plt.grid(True)
     plt.show()
 
-def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v):
+def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, W0_guess, T0_guess):
     # Lista para armazenar resultados
     results = []
 
@@ -377,7 +378,7 @@ def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v):
                 airplane['S_w'] = Sw
                 dt.geometry(airplane)
 
-                dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+                dt.thrust_matching(W0_guess, T0_guess, airplane)
                 W0 = airplane['W0']/1000  # em kN
                 W0plot.append(W0)
 
@@ -429,7 +430,7 @@ def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v):
     df = pd.DataFrame(results)
     return df
 
-def plot_W0_x_sweep(airplane, Swvec, sweep_wing_v):
+def plot_W0_x_sweep(airplane, Swvec, sweep_wing_v, W0_guess, T0_guess):
     # Lista para armazenar resultados
     results = []
 
@@ -442,7 +443,7 @@ def plot_W0_x_sweep(airplane, Swvec, sweep_wing_v):
             airplane['S_w'] = Sw
             dt.geometry(airplane)
 
-            dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+            dt.thrust_matching(W0_guess, T0_guess, airplane)
             W0 = airplane['W0']/1000  # em kN
             W0plot.append(W0)
 

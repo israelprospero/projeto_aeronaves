@@ -5,14 +5,16 @@ import pprint
 from modules import utils as m
 
 airplane = dt. standard_airplane ('my_airplane_1')
-
 dt.geometry(airplane)
 # dt.plot3d(airplane)
 
-Swvec = np.arange(50, 151, 5) # Cria vetor de areas de asa 
+W0_guess = 50150*dt.gravity
+T0_guess = 0.3*W0_guess
+
+Swvec = np.arange(50, 140, 5)   # Cria vetor de areas de asa 
 
 ### Questão 1 ###
-m.plot_T0_x_Sw(airplane, Swvec)
+m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess)
 
 ### Questão 3 ###
  
@@ -24,7 +26,7 @@ sweep_wing_v = np.append(sweep_wing_v, sweep_w)     # adiciona o enflechamento d
 flap_type_v = ['plain','single slotted','double slotted', 'triple slotted']       # lista com tipos de config de flap
 
 ## Plot de W0 x Sw com config de flap variando para cada sweep 
-m.plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v)
+m.plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, W0_guess, T0_guess)
 
 ## Plot de W0 x Sw com sweep variando
-m.plot_W0_x_sweep(airplane, Swvec, sweep_wing_v)
+m.plot_W0_x_sweep(airplane, Swvec, sweep_wing_v, W0_guess, T0_guess)

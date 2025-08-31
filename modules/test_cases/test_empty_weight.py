@@ -20,9 +20,9 @@ T0_guess = 140250.00000000000000
 
 CD, CLmax, dragDict = dt.aerodynamics( airplane , Mach , altitude , CL ,
 n_engines_failed = n_engines_failed ,highlift_config = highlift_config ,
-lg_down = lg_down , h_ground = h_ground, W0_guess=W0_guess )
+lg_down = lg_down , h_ground = h_ground )
 
-W_empty = dt.empty_weight ( W0_guess , T0_guess , airplane )
+W_empty = dt.empty_weight (W0_guess , T0_guess , airplane )
 print('W_empty = ', W_empty)
 print('W_allelse =', airplane['W_allelse'])
 print('W_eng =', airplane['W_eng'])

@@ -261,7 +261,7 @@ def geometry(airplane):
 
 #----------------------------------------
 
-def aerodynamics(airplane, Mach, altitude, CL, W0_guess,
+def aerodynamics(airplane, Mach, altitude, CL,
                  n_engines_failed=0, highlift_config='clean',
                  lg_down=0, h_ground=0, method=2,
                  ind_drag_method='Nita',
@@ -622,12 +622,19 @@ def engineTSFC(Mach, altitude, airplane):
         Cbase = 0.85/3600
     else:
         Cbase = 0.7/3600
+        
+    if airplane['name'] == 'fokker100':
+        Cbase = 0.839363767995491/3600
     
     
     C = Cbase*(1 - 0.15*BPR**0.65) * (1 + 0.28 * (1 + 0.063*BPR**2) * Mach) * sigma**(0.08)
     
-    # kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
-    kT = 0.25        
+    
+    kT = 0.25  
+    
+    if airplane['name'] == 'fokker100':
+        kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
+              
     return C, kT
 
 #----------------------------------------
@@ -824,7 +831,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     a_cruise = np.sqrt(gamma_air * R_air * T)
     V_cruise = Mach_cruise * a_cruise
     CL_cruise = 2 * W_cruise / (rho * S_w * V_cruise**2)
-    CD_cruise, _, dragDict_cruise = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W0_guess)
+    CD_cruise, _, dragDict_cruise = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise)
     Mf_cruise = np.exp(-range_cruise * C_cruise * CD_cruise / (V_cruise * CL_cruise))
 
     # Loiter
@@ -842,7 +849,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     V_altcruise = Mach_altcruise * a_altcruise
     W_altcruise = W_cruise * Mf_cruise * Mf_loiter * Mf_descent
     CL_alt = 2 * W_altcruise / (rho_alt * S_w * V_altcruise**2)
-    CD_alt, _, _ = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_alt, W0_guess)
+    CD_alt, _, _ = aerodynamics(airplane, Mach_altcruise, altitude_altcruise, CL_alt)
     Mf_altcruise = np.exp(-range_altcruise * C_altcruise * CD_alt / (V_altcruise * CL_alt))
 
     # Total Mf for consumed fuel
@@ -871,7 +878,7 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
         'fuel_trapped': W_trapped_fuel / gravity
     })
 
-    return W_fuel, Mf_cruise, CL_cruise, CD_cruise, C_cruise, L_D_max, C_loiter, CL_alt, CD_alt, C_altcruise
+    return W_fuel, W_cruise, CL_cruise, CD_cruise, C_cruise, L_D_max, C_loiter, CL_alt, CD_alt, C_altcruise
 
 #----------------------------------------
 
@@ -882,7 +889,7 @@ def weight(W0_guess, T0_guess, airplane):
     delta = 1000
 
     while abs(delta) > 10:
-        W_fuel, Mf_cruise, _, _, _, _, _, _, _, _ = fuel_weight(W0_guess, airplane, range_cruise)
+        W_fuel, W_cruise, _, _, _, _, _, _, _, _ = fuel_weight(W0_guess, airplane, range_cruise)
         W_empty = empty_weight(W0_guess, T0_guess, airplane)
         W0 = W_empty + W_fuel + W_payload + W_crew
         delta = W0 - W0_guess
@@ -892,48 +899,48 @@ def weight(W0_guess, T0_guess, airplane):
     airplane['W_empty'] = W_empty
     airplane['W_fuel'] = W_fuel
 
-    # Phases (sem 'trapped' por enquanto)
-    phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
-              'loiter', 'descent', 'altcruise', 'landing']
+    # # Phases (sem 'trapped' por enquanto)
+    # phases = ['engine_start', 'taxi', 'takeoff', 'climb', 'cruise',
+    #           'loiter', 'descent', 'altcruise', 'landing']
     
-    Mfs = [airplane['Mf_' + p] for p in phases]
+    # Mfs = [airplane['Mf_' + p] for p in phases]
 
-    W = W0 / gravity
-    Wfuel = W_fuel / gravity
+    # W = W0 / gravity
+    # Wfuel = W_fuel / gravity
 
-    # Garantir combustível preso em kg
-    W_used = W_fuel / 1.06  # usado
-    fuel_trapped = Wfuel - (W_used / gravity)
-    airplane['fuel_trapped'] = fuel_trapped
+    # # Garantir combustível preso em kg
+    # W_used = W_fuel / 1.06  # usado
+    # fuel_trapped = Wfuel - (W_used / gravity)
+    # airplane['fuel_trapped'] = fuel_trapped
 
-    airplane['W_gross_total'] = W
-    airplane['W_gross_fuel_total'] = Wfuel
+    # airplane['W_gross_total'] = W
+    # airplane['W_gross_fuel_total'] = Wfuel
 
-    fuel_breakdown = {}
-    percent_breakdown = {}
-    mf_breakdown = {}
+    # fuel_breakdown = {}
+    # percent_breakdown = {}
+    # mf_breakdown = {}
 
-    for phase, mf in zip(phases, Mfs):
-        fuel = W * (1 - mf)
-        percent = 100 * fuel / Wfuel if Wfuel > 0 else 0
-        airplane[f'W_gross_{phase}'] = W
-        fuel_breakdown[phase.replace('_', ' ').title()] = fuel
-        percent_breakdown[phase.replace('_', ' ').title()] = percent
-        mf_breakdown[phase.replace('_', ' ').title()] = mf
-        W *= mf
+    # for phase, mf in zip(phases, Mfs):
+    #     fuel = W * (1 - mf)
+    #     percent = 100 * fuel / Wfuel if Wfuel > 0 else 0
+    #     airplane[f'W_gross_{phase}'] = W
+    #     fuel_breakdown[phase.replace('_', ' ').title()] = fuel
+    #     percent_breakdown[phase.replace('_', ' ').title()] = percent
+    #     mf_breakdown[phase.replace('_', ' ').title()] = mf
+    #     W *= mf
 
-    # Adiciona "Trapped fuel" ao final
-    fuel_breakdown['Trapped fuel'] = fuel_trapped
-    percent_breakdown['Trapped fuel'] = 100 * fuel_trapped / Wfuel
-    mf_breakdown['Trapped fuel'] = airplane['Mf_trapped']
+    # # Adiciona "Trapped fuel" ao final
+    # fuel_breakdown['Trapped fuel'] = fuel_trapped
+    # percent_breakdown['Trapped fuel'] = 100 * fuel_trapped / Wfuel
+    # mf_breakdown['Trapped fuel'] = airplane['Mf_trapped']
 
-    airplane['fuel_breakdown'] = fuel_breakdown
-    airplane['fuel_percent_breakdown'] = percent_breakdown
-    airplane['fuel_Mf_breakdown'] = mf_breakdown
-    airplane['fuel_total_used'] = sum(fuel_breakdown[p] for p in fuel_breakdown if p != 'Trapped fuel')
-    airplane['fuel_total'] = Wfuel
+    # airplane['fuel_breakdown'] = fuel_breakdown
+    # airplane['fuel_percent_breakdown'] = percent_breakdown
+    # airplane['fuel_Mf_breakdown'] = mf_breakdown
+    # airplane['fuel_total_used'] = sum(fuel_breakdown[p] for p in fuel_breakdown if p != 'Trapped fuel')
+    # airplane['fuel_total'] = Wfuel
 
-    return W0, W_empty, W_fuel, Mf_cruise
+    return W0, W_empty, W_fuel, W_cruise
 
 
 #----------------------------------------
@@ -982,7 +989,7 @@ def performance(W0, Mf_cruise, airplane):
     lg_down = 1
     h_ground_to = h_ground
     CL = 0.5 # This parameter is not used to estimate CLmax, so any value is okay
-    _, CLmaxTO, _ = aerodynamics(airplane, Mach, altitude, CL, W0,
+    _, CLmaxTO, _ = aerodynamics(airplane, Mach, altitude, CL,
                      n_engines_failed, highlift_config, lg_down, h_ground_to)
     
     
@@ -1001,7 +1008,7 @@ def performance(W0, Mf_cruise, airplane):
     lg_down = 1
     h_ground_ld = h_ground
     
-    _, CLmax_ld, _ = aerodynamics(airplane, Mach, altitude, CL, W0,
+    _, CLmax_ld, _ = aerodynamics(airplane, Mach, altitude, CL,
                       n_engines_failed, highlift_config,
                       lg_down, h_ground_ld)
      
@@ -1028,7 +1035,7 @@ def performance(W0, Mf_cruise, airplane):
     lg_down = 0
     h_ground_cruise = 0
     
-    CD_cruise, _, _ = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise, W_cruise,
+    CD_cruise, _, _ = aerodynamics(airplane, Mach_cruise, altitude_cruise, CL_cruise,
                       n_engines_failed, highlift_config, lg_down, h_ground_cruise)  
     
     T_cruise = 1/2 * rho * v_cruise**2 * S_w * CD_cruise
@@ -1160,7 +1167,7 @@ def climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_
     
     Mach = 0.2 # Not used to estimate CLmax
     CL = 0.2 # Not used to estimate CLmax
-    _, CLmax_climb, _ = aerodynamics(airplane, Mach, altitude_climb, CL, W0,
+    _, CLmax_climb, _ = aerodynamics(airplane, Mach, altitude_climb, CL,
                      n_engines_failed, highlift_config,
                      lg_down, h_ground_climb)
     
@@ -1168,7 +1175,7 @@ def climb_analysis(airplane, gamma_climb, kS, altitude_climb, lg_down, h_ground_
     v_climb = np.sqrt(2 * W0 * Mf_climb / (rho * S_w * CL_climb))
     Mach_climb = v_climb / a_climb
     
-    CD_climb, _, _ = aerodynamics(airplane, Mach_climb, altitude_climb, CL_climb, W0,
+    CD_climb, _, _ = aerodynamics(airplane, Mach_climb, altitude_climb, CL_climb,
                       n_engines_failed, highlift_config, lg_down, h_ground_climb)
     
     T0_W_climb = n_engines / (n_engines - n_engines_failed) * (gamma_climb + CD_climb / CL_climb)
@@ -1186,7 +1193,8 @@ def thrust_matching(W0_guess, T0_guess, airplane):
     # Loop to adjust T0
     while abs(delta) > 10:
 
-        W0, W_empty, W_fuel, Mf_cruise = weight(W0_guess, T0_guess, airplane)
+        W0, W_empty, W_fuel, W_cruise = weight(W0_guess, T0_guess, airplane)
+        Mf_cruise = W_cruise/W0
 
         T0, T0vec, deltaS_wlan, CLmaxTO = performance(W0, Mf_cruise, airplane)
 
@@ -1876,6 +1884,8 @@ def standard_airplane(name='fokker100'):
         
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
                     
+                    'name': 'fokker100',
+                    
                     'S_w' : 93.5, # Wing area [m2] - From Obert's paper
                     'AR_w' : 8.32,  # Wing aspect ratio
                     'taper_w' : 0.25, # Wing taper ratio
@@ -1987,9 +1997,9 @@ def standard_airplane(name='fokker100'):
                     'n_captains' : 1, # Number of captains in flight
                     'n_copilots' : 1, # Number of copilots in flight
                         
-                    'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
+                    'rho_fuel' : 804 # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 40000*gravity # Guess for MTOW
+                    #'W0_guess' : 40000*gravity # Guess for MTOW
                     }
 
     elif name == 'my_airplane_1':
@@ -1997,6 +2007,8 @@ def standard_airplane(name='fokker100'):
         # This is just a placeholder to register the student airplane.
 
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
+                    
+                    'name': 'my_airplane_1',
                     
                     'S_w' : 97.58, # Wing area [m2]
                     'AR_w' : 9.57,  # Wing aspect ratio
@@ -2104,8 +2116,8 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 50150*gravity, # Guess for MTOW
-                    'T0_guess' : 0.3*50150*gravity, # 30% OF W0_GUES!!!!!!!!
+                    # 'W0_guess' : 50150*gravity, # Guess for MTOW
+                    # 'T0_guess' : 0.3*50150*gravity, # 30% OF W0_GUES!!!!!!!!
                     'MLW_frac' : 0.85, # Max Landing Weight / Max Takeoff Weight
                     
                     'deltaISA_takeoff' : 15.0,
@@ -2117,6 +2129,8 @@ def standard_airplane(name='fokker100'):
         # This is just a placeholder to register the student airplane.
 
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
+                    
+                    'name': 'my_airplane_2',
                     
                     'S_w' : 105.58, # Wing area [m2]
                     'AR_w' : 10.32,  # Wing aspect ratio
@@ -2224,8 +2238,8 @@ def standard_airplane(name='fokker100'):
                     
                     'rho_fuel' : 804, # Fuel density kg/m3 (This is Jet A-1)
 
-                    'W0_guess' : 49200*gravity, # Guess for MTOW
-                    'T0_guess' : 0.3*49200*gravity, # 30% OF W0_GUES!!!!!!!!
+                    # 'W0_guess' : 49200*gravity, # Guess for MTOW
+                    # 'T0_guess' : 0.3*49200*gravity, # 30% OF W0_GUES!!!!!!!!
                     'MLW_frac' : 0.85, # Max Landing Weight / Max Takeoff Weight
                     
                     'deltaISA_takeoff' : 15.0,
