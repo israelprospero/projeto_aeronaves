@@ -11,16 +11,18 @@ dt.geometry(airplane)
 W0_guess = 50150*dt.gravity
 T0_guess = 0.3*W0_guess
 
-Swvec = np.arange(50, 140, 5)   # Cria vetor de areas de asa 
+Swvec = np.arange(50, 140, 1)   # Cria vetor de areas de asa 
 
 ### Questão 1 ###
 m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess)
 
 ### Questão 3 ###
- 
-sweep_wing_v = np.arange(14,32,2)*np.pi/180         # cria vetor de angulos de enflechamento
+### OBS: LEIA OS COMENTÁRIOS  ###
+
+sweep_wing_v = np.arange(14,32,2)*np.pi/180         # cria vetor de angulos de enflechamento (comentar essa linha caso queira plotar apenas um enflechamento)
 sweep_w = airplane['sweep_w']                       # puxa o enflechamento do nosso avião no dicionário e salva em uma variavel
-sweep_wing_v = np.append(sweep_wing_v, sweep_w)     # adiciona o enflechamento do nosso avião no vetor de enflechamentos
+sweep_wing_v = np.append(sweep_wing_v, sweep_w)     # adiciona o enflechamento do nosso avião no vetor de enflechamentos (comentar essa linha caso queira plotar apenas um enflechamento)
+## sweep_wing_v = np.array([sweep_w])               # plota curva para apenas o sweep angle original da aeronave 1 (descomentar essa linha caso queira plotar apenas um enflechamento)
 
 # slat_type_v = [None, 'leading edge flap', 'Kruger flaps','slats']               # lista com tipos de config de slat
 flap_type_v = ['plain','single slotted','double slotted', 'triple slotted']       # lista com tipos de config de flap
