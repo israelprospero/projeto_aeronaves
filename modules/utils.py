@@ -340,6 +340,10 @@ def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess):
     ]
 
     # print(len(airplane['T0vec']))
+
+    ## Imprime T0 para area de 82m2
+    idx = np.where(Swvec == 82)[0][0]
+    print("Valor de T0 para 82 m2: T0 = ", 1.05*max(T0plot[idx]) )
     
     plt.figure()
     for i in range(8):
