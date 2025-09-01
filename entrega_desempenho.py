@@ -9,12 +9,13 @@ dt.geometry(airplane)
 # dt.plot3d(airplane)
 
 W0_guess = 50150*dt.gravity
-T0_guess = 0.3*W0_guess
+T0_guess = 0.3*W0_guess 
 
 Swvec = np.arange(50, 140, 1)   # Cria vetor de areas de asa 
 
 ### Questão 1 ###
-m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess)
+#m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess)
+m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=(82, 211869))
 
 ### Questão 3 ###
 ### OBS: LEIA OS COMENTÁRIOS  ###
@@ -32,3 +33,6 @@ m.plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, W0_guess, T0_guess)
 
 ## Plot de W0 x Sw com sweep variando
 m.plot_W0_x_sweep(airplane, Swvec, sweep_wing_v, W0_guess, T0_guess)
+
+### Questão 6 ###
+m.plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=(72, 211869))

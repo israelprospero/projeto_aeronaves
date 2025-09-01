@@ -222,19 +222,30 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     # plt.show()
 
 
-def plot_T0_x_Sw(airplane, Swvec):
-    
+def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=None):
+    """
+    Plota as curvas de empuxo requerido vs área alar para diferentes condições.
+
+    Args:
+        airplane (dict): dicionário com dados da aeronave
+        Swvec (list/np.array): vetor de áreas alares
+        W0_guess (float): peso estimado da aeronave [N]
+        T0_guess (float): empuxo estimado da aeronave [N]
+        op_point (tuple or None): ponto de operação (Sw, T0) para destacar no gráfico.
+        savepath (str or None): caminho para salvar a figura. Default = None
+    """
+
     T0plot = []
+    deltaS_landing_last = None
+
     for Sw in Swvec:
-        airplane['S_w'] = Sw
+        airplane['S_w'] = float(Sw)
         dt.geometry(airplane)
-        
-        dt.thrust_matching(airplane['W0_guess'], airplane['T0_guess'], airplane)
+
+        dt.thrust_matching(W0_guess, T0_guess, airplane)
         T0plot.append(airplane['T0vec'])
-        
-        # print(airplane['T0vec'])
-        # print('\n')
-        
+        deltaS_landing_last = airplane.get('deltaS_wlan', None)
+
     names = [
         "T0_takeoff",
         "T0_cruise",
@@ -246,18 +257,57 @@ def plot_T0_x_Sw(airplane, Swvec):
         "T0_FAR25.121d"
     ]
 
-    # print(len(airplane['T0vec']))
-    
-    plt.figure()
-    for i in range(8):
-        print(i)
-        first_terms = [lst[i] for lst in T0plot]
-        plt.plot(Swvec, first_terms, label=f'{names[i]}')
-        # print(first_terms)
-    plt.axvline(x=airplane['deltaS_wlan'], color='r', linestyle='--', linewidth=2, label = 'landing')
-    plt.legend()
-    plt.xlabel('S_w (m^2)')
-    plt.ylabel('T0 (N)')
+    # -------- Estilo acadêmico --------
+    plt.rcParams.update({
+        "font.size": 12,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
+
+    fig, ax = plt.subplots(figsize=(8, 5.2))
+    T0plot = np.array(T0plot)
+
+    # Curvas
+    for i, name in enumerate(names):
+        ax.plot(Swvec, T0plot[:, i], linewidth=2, label=name)
+
+    # Linha vertical de pouso
+    if deltaS_landing_last is not None:
+        ax.axvline(x=deltaS_landing_last, color="tab:red", linestyle="--",
+                   linewidth=1.8, label="Landing")
+
+    # Eixos
+    ax.set_xlabel(r"$S_w$  [m$^2$]")
+    ax.set_ylabel(r"$T_0$  [N]")
+
+    # Legenda
+    ax.legend(ncol=2, frameon=False, fontsize=10, loc="best")
+
+    # -------- Ponto de operação opcional --------
+    if op_point is not None:
+        S_op, T_op = op_point
+
+        # marcador elegante (círculo com contorno)
+        ax.scatter([S_op], [T_op], s=120, marker="o", facecolor="white",
+                   edgecolor="black", linewidths=1.8, zorder=5)
+        ax.scatter([S_op], [T_op], s=28, marker="o", color="black", zorder=6)
+
+        # projeções tracejadas
+        ax.axhline(y=T_op, linestyle=":", linewidth=1.5, color="gray")
+        ax.axvline(x=S_op, linestyle=":", linewidth=1.5, color="gray")
+
+        # anotação
+        ax.annotate(f"({S_op:.0f} m², {T_op:,.0f} N)",
+                    xy=(S_op, T_op), xytext=(12, 14), textcoords="offset points",
+                    fontsize=20,
+                    arrowprops=dict(arrowstyle="->", linewidth=1.0, color="black"),
+                    bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="black", alpha=0.7))
+
+    fig.tight_layout()
+    if savepath:
+        fig.savefig(savepath, dpi=300, bbox_inches="tight")
     plt.show()
 
 def plot_W0_x_ar_w(ar_w_range, airplane, num):
@@ -315,19 +365,30 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     # plt.show()
 
 
-def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess):
-    
+def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=None):
+    """
+    Plota as curvas de empuxo requerido vs área alar para diferentes condições.
+
+    Args:
+        airplane (dict): dicionário com dados da aeronave
+        Swvec (list/np.array): vetor de áreas alares
+        W0_guess (float): peso estimado da aeronave [N]
+        T0_guess (float): empuxo estimado da aeronave [N]
+        op_point (tuple or None): ponto de operação (Sw, T0) para destacar no gráfico.
+        savepath (str or None): caminho para salvar a figura. Default = None
+    """
+
     T0plot = []
+    deltaS_landing_last = None
+
     for Sw in Swvec:
-        airplane['S_w'] = Sw
+        airplane['S_w'] = float(Sw)
         dt.geometry(airplane)
-        
+
         dt.thrust_matching(W0_guess, T0_guess, airplane)
         T0plot.append(airplane['T0vec'])
-        
-        # print(airplane['T0vec'])
-        # print('\n')
-        
+        deltaS_landing_last = airplane.get('deltaS_wlan', None)
+
     names = [
         "T0_takeoff",
         "T0_cruise",
@@ -339,23 +400,57 @@ def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess):
         "T0_FAR25.121d"
     ]
 
-    # print(len(airplane['T0vec']))
+    # -------- Estilo acadêmico --------
+    plt.rcParams.update({
+        "font.size": 12,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    })
 
-    ## Imprime T0 para area de 82m2
-    idx = np.where(Swvec == 82)[0][0]
-    print("Valor de T0 para 82 m2: T0 = ", 1.05*max(T0plot[idx]) )
-    
-    plt.figure()
-    for i in range(8):
-        # print(i)
-        first_terms = [lst[i] for lst in T0plot]
-        plt.plot(Swvec, first_terms, label=f'{names[i]}')
-        # print(first_terms)
-    plt.axvline(x=airplane['deltaS_wlan'], color='r', linestyle='--', linewidth=2, label = 'landing')
-    plt.legend()
-    plt.xlabel('S_w (m^2)')
-    plt.ylabel('T0 (N)')
-    plt.grid(True)
+    fig, ax = plt.subplots(figsize=(8, 5.2))
+    T0plot = np.array(T0plot)
+
+    # Curvas
+    for i, name in enumerate(names):
+        ax.plot(Swvec, T0plot[:, i], linewidth=2, label=name)
+
+    # Linha vertical de pouso
+    if deltaS_landing_last is not None:
+        ax.axvline(x=deltaS_landing_last, color="tab:red", linestyle="--",
+                   linewidth=1.8, label="Landing")
+
+    # Eixos
+    ax.set_xlabel(r"$S_w$  [m$^2$]",fontsize=16)
+    ax.set_ylabel(r"$T_0$  [N]",fontsize=16)
+
+    # Legenda
+    ax.legend(ncol=2, frameon=False, fontsize=14, loc="best")
+
+    # -------- Ponto de operação opcional --------
+    if op_point is not None:
+        S_op, T_op = op_point
+
+        # marcador elegante (círculo com contorno)
+        ax.scatter([S_op], [T_op], s=120, marker="o", facecolor="white",
+                   edgecolor="black", linewidths=1.8, zorder=5)
+        ax.scatter([S_op], [T_op], s=28, marker="o", color="black", zorder=6)
+
+        # projeções tracejadas
+        ax.axhline(y=T_op, linestyle=":", linewidth=1.5, color="gray")
+        ax.axvline(x=S_op, linestyle=":", linewidth=1.5, color="gray")
+
+        # anotação
+        ax.annotate(f"({S_op:.0f} m², {T_op:,.0f} N)",
+                    xy=(S_op, T_op), xytext=(12, 14), textcoords="offset points",
+                    fontsize=11,
+                    arrowprops=dict(arrowstyle="->", linewidth=1.0, color="black"),
+                    bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="black", alpha=0.7))
+
+    fig.tight_layout()
+    if savepath:
+        fig.savefig(savepath, dpi=300, bbox_inches="tight")
     plt.show()
 
 def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, W0_guess, T0_guess):
