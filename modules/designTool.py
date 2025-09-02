@@ -1323,16 +1323,17 @@ def balance(airplane):
     xac_w = xm_w + cm_w/4
     
     # Wing-Fuselage Aerodynamic Center
-    Kf = 0.1462 * np.exp(4.8753 * (xr_w + 0.25 * cm_w) / L_f ) 
+    Kf = 0.1462 * np.exp(4.8753 * (xr_w + 0.25 * cr_w) / L_f ) 
     CM_alpha_f = (Kf * D_f**2 * L_f) / (cm_w * S_w) 
     CL_alpha_wf = 0.98 * CL_alpha_w
     xac_wf = xac_w - CM_alpha_f / CL_alpha_wf * cm_w
     
     # Horizontal tail Aerodynamic Center
     sweep_maxt_h = geo_change_sweep(0.25, 0.40,sweep_h, b_h/2, cr_h, ct_h)
-    CL_alpha_h = 2 * np.pi * AR_h / (2 + np.sqrt(4 + (AR_h * beta / 0.95)**2 * (1 + (np.tan(sweep_maxt_h)/beta)**2 ) ) )
+    CL_alpha_h = 2 * np.pi * AR_h / (2 + np.sqrt(4 + (AR_h * beta / 0.95)**2 * (1 + (np.tan(sweep_maxt_h)/beta)**2 ) ) ) * 0.98
     xac_h = xm_h + cm_h/4
-    Lh = xac_h - xac_w
+    # Lh = xac_h - xac_w
+    Lh = Lc_h*cm_w
     k_A = 1/AR_eff - 1/(1 + AR_eff**1.7)
     k_lambda = (10 - 3 * taper_w) / 7
     k_h = (1 - abs((zm_h - zr_w)/b_w)) / (2*Lh/b_w)**(1/3)
