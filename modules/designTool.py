@@ -734,36 +734,42 @@ def empty_weight(W0_guess, T0_guess, airplane):
     
     # Wing Center of Gravity Estimation
     x_CG_w = xm_w + 0.4*cm_w
+    airplane['xcg_w'] = x_CG_w
     
     # Horizontal Tail Weight
     W_h = 27 * gravity * S_h
     
     # HT Center of Gravity Estimation
     x_CG_h = xm_h + 0.4*cm_h
+    airplane['xcg_h'] = x_CG_h
     
     # Vertical Tail Weight
     W_v = 27 * gravity * S_v
     
     # VT Center of Gravity Estimation
     x_CG_v = xm_v + 0.4*cm_v
+    airplane['xcg_v'] = x_CG_v
     
     #Fuselage Weight
     W_f = 24 * gravity * Swet_f
     
     # Fuselage Center of Gravity Estimation
     x_CG_f = 0.45*L_f
+    airplane['xcg_f'] = x_CG_f
     
     # Nose Landing Gear Weight 
     W_nlg = 0.15 * 0.043 * W0_guess
     
     # Nose Landing Gear Center of Gravity Estimation
     x_CG_nlg = x_nlg
+    airplane['xcg_nlg'] = x_CG_nlg
     
     # Main Landing Gear Weight 
     W_mlg = 0.85 * 0.043 * W0_guess
     
     # Main Landing Gear Center of Gravity Estimation
     x_CG_mlg = x_mlg
+    airplane['xcg_mlg'] = x_CG_mlg
     
     
     T_eng_s = T0_guess / n_engines
@@ -775,10 +781,12 @@ def empty_weight(W0_guess, T0_guess, airplane):
     
     # Engine Center of Gravity Estimation
     x_CG_eng = x_n + 0.5*L_n
+    airplane['xcg_eng'] = x_CG_eng
     
     # Remaining Systemas Weight and Center of Gravity Estimations
     W_allelse = 0.17*W0_guess
     x_CG_ae = 0.45*L_f
+    airplane['xcg_allelse'] = x_CG_ae
     
     # Total Empty Weight
     W_empty = W_w + W_h + W_v + W_f + W_nlg + W_mlg + W_eng_installed + W_allelse
