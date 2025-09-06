@@ -1371,27 +1371,40 @@ def balance(airplane):
 #----------------------------------------
 
 def landing_gear(airplane):
+    """
+    Updates the airplane dictionary with:
+    frac_nlg_fwd, frac_nlg_aft,
+    alpha_tipback, alpha_tailstrike,
+    phi_overturn
+    """
 
-    # Unpack dictionary
-    x_nlg = airplane['x_nlg']
-    x_mlg = airplane['x_mlg']
-    y_mlg = airplane['y_mlg']
-    z_lg = airplane['z_lg']
-    xcg_fwd = airplane['xcg_fwd']
-    xcg_aft = airplane['xcg_aft']
-    x_tailstrike = airplane['x_tailstrike']
-    z_tailstrike = airplane['z_tailstrike']
+    # Extract required inputs
+    x_nlg = airplane.get('x_nlg')
+    x_mlg = airplane.get('x_mlg')
+    y_mlg = airplane.get('y_mlg')
+    z_lg = airplane.get('z_lg')
 
+    xcg_fwd = airplane.get('xcg_fwd')
+    xcg_aft = airplane.get('xcg_aft')
 
-    # Update dictionary
-    airplane['frac_nlg_fwd'] = frac_nlg_fwd
-    airplane['frac_nlg_aft'] = frac_nlg_aft
-    airplane['alpha_tipback'] = alpha_tipback
-    airplane['alpha_tailstrike'] = alpha_tailstrike
-    airplane['phi_overturn'] = phi_overturn
+    x_tailstrike = airplane.get('x_tailstrike')
+    z_tailstrike = airplane.get('z_tailstrike')
+
+    # --- Nose landing gear weight fractions ---
+    airplane['frac_nlg_fwd'] = (x_mlg - xcg_fwd) / (x_mlg - x_nlg)
+    airplane['frac_nlg_aft'] = (x_mlg - xcg_aft) / (x_mlg - x_nlg)
+
+    # --- Tipback angle ---
+    airplane['alpha_tipback'] = np.arctan((xcg_aft - x_mlg) / z_lg)
+
+    # --- Tailstrike angle ---
+    airplane['alpha_tailstrike'] = np.arctan((z_tailstrike - z_lg) / (x_tailstrike - x_mlg))
+
+    # --- Overturn angle ---
+    SGL = (xcg_fwd - x_nlg) * y_mlg / np.sqrt((x_mlg - x_nlg)**2 + y_mlg**2)
+    airplane['phi_overturn'] = np.arctan(-z_lg / SGL)
 
     return None
-
 #----------------------------------------
 
 def doc(airplane, CEF=6.0, plot=False):
