@@ -2024,7 +2024,7 @@ def standard_airplane(name='fokker100'):
                     'taper_w' : 0.27, # Wing taper ratio
                     'sweep_w' : 25.1*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.1*np.pi/180, # Wing dihedral [rad]
-                    'xr_w' : 10.5, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
+                    'xr_w' : 10.8, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
                     'zr_w' : -1.4, # Vertical position of the wing (with respect to the fuselage nose) [m]
                     'tcr_w' : 0.123, # t/c of the root section of the wing
                     'tct_w' : 0.096, # t/c of the tip section of the wing
@@ -2066,14 +2066,14 @@ def standard_airplane(name='fokker100'):
                                 },
                     
                     'x_nlg' : 3.7, # Longitudinal position of the nose landing gear [m]
-                    'x_mlg' : 17.4, # Longitudinal position of the main landing gear [m]
+                    'x_mlg' : 16.05, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
                     'z_lg' : -2.53, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.4, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -1.54, # Vertical position of critical tailstrike point [m]
                     
                     'c_tank_c_w' : 0.4, # Fraction of the wing chord occupied by the fuel tank
-                    'x_tank_c_w' : 0.2, # Fraction of the wing chord where fuel tank starts
+                    'x_tank_c_w' : 0.4, # Fraction of the wing chord where fuel tank starts
                     'b_tank_b_w_start' : 0.0, # Fraction of the wing semi-span where fuel tank starts
                     'b_tank_b_w_end' : 0.95, # Fraction of the wing semi-span where fuel tank ends
                     
@@ -2113,7 +2113,7 @@ def standard_airplane(name='fokker100'):
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 10000*gravity, # Payload weight [N]
-                    'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
+                    'xcg_payload' : 14.9, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 4*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
