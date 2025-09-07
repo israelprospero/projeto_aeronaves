@@ -6,7 +6,7 @@ from modules import utils as m
 
 airplane = dt.standard_airplane('my_airplane_1')
 dt.geometry(airplane)
-dt.plot3d(airplane)
+# dt.plot3d(airplane)
 
 W0_guess = 50150*dt.gravity
 T0_guess = 0.3*W0_guess 

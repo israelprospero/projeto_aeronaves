@@ -2030,12 +2030,12 @@ def standard_airplane(name='fokker100'):
                     
                     'name': 'my_airplane_1',
                     
-                    'S_w' : 97.58, # Wing area [m2]
+                    'S_w' : 84, # Wing area [m2]
                     'AR_w' : 9.57,  # Wing aspect ratio
                     'taper_w' : 0.27, # Wing taper ratio
                     'sweep_w' : 25.1*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.1*np.pi/180, # Wing dihedral [rad]
-                    'xr_w' : 10.56, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
+                    'xr_w' : 10.68, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
                     'zr_w' : -1.4, # Vertical position of the wing (with respect to the fuselage nose) [m]
                     'tcr_w' : 0.123, # t/c of the root section of the wing
                     'tct_w' : 0.096, # t/c of the tip section of the wing
@@ -2063,7 +2063,7 @@ def standard_airplane(name='fokker100'):
                     'L_f' : 30.85, # Fuselage length [m]
                     'D_f' : 3.7, # Fuselage diameter [m]
                     
-                    'x_n' : 12.02, # Longitudinal position of the nacelle frontal face [m]
+                    'x_n' : 12.67, # Longitudinal position of the nacelle frontal face [m]
                     'y_n' : 5.01, # Lateral position of the nacelle centerline [m]
                     'z_n' : -2.35, # Vertical position of the nacelle centerline [m]
                     'L_n' : 4.91, # Nacelle length [m]
@@ -2073,18 +2073,18 @@ def standard_airplane(name='fokker100'):
                     'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 'BPR' : 13, # Engine bypass ratio
-                                'Cbase' : 0.7/3600, # I adjusted this value by hand to match the fuel weight
+                                'Cbase' : 0.7/3600,
                                 },
                     
-                    'x_nlg' : 4.0, # Longitudinal position of the nose landing gear [m]
-                    'x_mlg' : 15.77, # Longitudinal position of the main landing gear [m]
+                    'x_nlg' : 4.07, # Longitudinal position of the nose landing gear [m]
+                    'x_mlg' : 15.52, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
                     'z_lg' : -2.53, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.4, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -1.54, # Vertical position of critical tailstrike point [m]
                     
-                    'c_tank_c_w' : 0.4, # Fraction of the wing chord occupied by the fuel tank
-                    'x_tank_c_w' : 0.45, # Fraction of the wing chord where fuel tank starts
+                    'c_tank_c_w' : 0.5, # Fraction of the wing chord occupied by the fuel tank
+                    'x_tank_c_w' : 0.2, # Fraction of the wing chord where fuel tank starts
                     'b_tank_b_w_start' : 0.0, # Fraction of the wing semi-span where fuel tank starts
                     'b_tank_b_w_end' : 0.95, # Fraction of the wing semi-span where fuel tank ends
                     
