@@ -1317,6 +1317,12 @@ def balance(airplane):
     xcg_3 = (W_empty * xcg_empty + W_crew * xcg_crew + W_payload * xcg_payload) / (W_empty + W_crew + W_payload)
     xcg_4 = (W_empty * xcg_empty + W_crew * xcg_crew + W_fuel * xcg_fuel) / (W_empty + W_crew + W_fuel)
     xcg_5 = (W_empty * xcg_empty + W_crew * xcg_crew + W_payload * xcg_payload + W_fuel * xcg_fuel) / W0
+
+    print(f'Condição 1: {(xcg_1- xm_w)/cm_w},{W_empty/9.81}')
+    print(f'Condição 2: {(xcg_2- xm_w)/cm_w},{(W_empty + W_crew)/9.81}')
+    print(f'Condição 3: {(xcg_3- xm_w)/cm_w},{(W_empty + W_crew + W_payload)/9.81}')
+    print(f'Condição 4: {(xcg_4- xm_w)/cm_w},{(W_empty + W_crew + W_fuel)/9.81}')
+    print(f'Condição 5: {(xcg_5- xm_w)/cm_w},{W0/9.81}')
                
     xcg_fwd = min(xcg_1, xcg_2, xcg_3, xcg_4, xcg_5) - 0.02 * cm_w
     xcg_aft = max(xcg_1, xcg_2, xcg_3, xcg_4, xcg_5) + 0.02 * cm_w
