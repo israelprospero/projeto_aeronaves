@@ -65,4 +65,4 @@ print("airplane['tank_excess'] = ",airplane['tank_excess'])
 print("airplane['V_maxfuel'] = ",airplane['V_maxfuel'])
 print("airplane['CLv'] = ",airplane['CLv'])
 
-print(airplane)
+# print(airplane)

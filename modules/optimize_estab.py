@@ -63,6 +63,6 @@ ratios = np.array([
     airplane['tank_excess']
 ])
 print("Ratios achieved:", ratios)
-print(airplane['c_flap_c_wing'])
-print(airplane['c_ail_c_wing'])
+# print(airplane['c_flap_c_wing'])
+# print(airplane['c_ail_c_wing'])
 
