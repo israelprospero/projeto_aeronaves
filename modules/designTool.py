@@ -2092,7 +2092,7 @@ def standard_airplane(name='fokker100'):
                     'k_korn' : 0.91, # Airfoil technology factor for Korn equation (wave drag)
         
                     'flap_type' : 'double slotted',  # Flap type
-                    'c_flap_c_wing' : 0.28, # Fraction of the wing chord occupied by flaps
+                    'c_flap_c_wing' : 0.26, # Fraction of the wing chord occupied by flaps
                     'b_flap_b_wing' : 0.60, # Fraction of the wing span occupied by flaps (including fuselage portion)
                     
                     'slat_type' : None, # Slat type
