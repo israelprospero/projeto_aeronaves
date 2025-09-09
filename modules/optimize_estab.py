@@ -39,7 +39,7 @@ bounds = [
     (11.0, 13),     # x_n
     (3, 6),         # x_nlg
     (0.3, 0.5),     # c_tank_c_w
-    (80, 84)        # S_w
+    (80, 90)        # S_w
 ]
 
 # Run optimization
@@ -63,5 +63,6 @@ ratios = np.array([
     airplane['tank_excess']
 ])
 print("Ratios achieved:", ratios)
-print(airplane['CLv'])
+print(airplane['c_flap_c_wing'])
+print(airplane['c_ail_c_wing'])
 
