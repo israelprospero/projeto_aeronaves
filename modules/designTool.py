@@ -2026,18 +2026,16 @@ def standard_airplane(name='fokker100'):
 
     elif name == 'my_airplane_1':
 
-        # This is just a placeholder to register the student airplane.
-
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
                     
                     'name': 'my_airplane_1',
                     
-                    'S_w' : 97.58, # Wing area [m2]
+                    'S_w' : 84, # Wing area [m2]
                     'AR_w' : 9.57,  # Wing aspect ratio
                     'taper_w' : 0.27, # Wing taper ratio
                     'sweep_w' : 25.1*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.1*np.pi/180, # Wing dihedral [rad]
-                    'xr_w' : 10.5, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
+                    'xr_w' : 10.68, # Longitudinal position of the wing (with respect to the fuselage nose) [m]
                     'zr_w' : -1.4, # Vertical position of the wing (with respect to the fuselage nose) [m]
                     'tcr_w' : 0.123, # t/c of the root section of the wing
                     'tct_w' : 0.096, # t/c of the tip section of the wing
@@ -2065,7 +2063,7 @@ def standard_airplane(name='fokker100'):
                     'L_f' : 30.85, # Fuselage length [m]
                     'D_f' : 3.7, # Fuselage diameter [m]
                     
-                    'x_n' : 10, # Longitudinal position of the nacelle frontal face [m]
+                    'x_n' : 12.67, # Longitudinal position of the nacelle frontal face [m]
                     'y_n' : 5.01, # Lateral position of the nacelle centerline [m]
                     'z_n' : -2.35, # Vertical position of the nacelle centerline [m]
                     'L_n' : 4.91, # Nacelle length [m]
@@ -2075,18 +2073,18 @@ def standard_airplane(name='fokker100'):
                     'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 'BPR' : 13, # Engine bypass ratio
-                                'Cbase' : 0.7/3600, # I adjusted this value by hand to match the fuel weight
+                                'Cbase' : 0.7/3600,
                                 },
                     
-                    'x_nlg' : 3.7, # Longitudinal position of the nose landing gear [m]
-                    'x_mlg' : 17.4, # Longitudinal position of the main landing gear [m]
+                    'x_nlg' : 4.07, # Longitudinal position of the nose landing gear [m]
+                    'x_mlg' : 15.52, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
                     'z_lg' : -2.53, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.4, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -1.54, # Vertical position of critical tailstrike point [m]
                     
-                    'c_tank_c_w' : 0.4, # Fraction of the wing chord occupied by the fuel tank
-                    'x_tank_c_w' : 0.2, # Fraction of the wing chord where fuel tank starts
+                    'c_tank_c_w' : 0.5, # Fraction of the wing chord occupied by the fuel tank
+                    'x_tank_c_w' : 0.17, # Fraction of the wing chord where fuel tank starts
                     'b_tank_b_w_start' : 0.0, # Fraction of the wing semi-span where fuel tank starts
                     'b_tank_b_w_end' : 0.95, # Fraction of the wing semi-span where fuel tank ends
                     
@@ -2094,14 +2092,14 @@ def standard_airplane(name='fokker100'):
                     'k_korn' : 0.91, # Airfoil technology factor for Korn equation (wave drag)
         
                     'flap_type' : 'double slotted',  # Flap type
-                    'c_flap_c_wing' : 0.30, # Fraction of the wing chord occupied by flaps
+                    'c_flap_c_wing' : 0.28, # Fraction of the wing chord occupied by flaps
                     'b_flap_b_wing' : 0.60, # Fraction of the wing span occupied by flaps (including fuselage portion)
                     
                     'slat_type' : None, # Slat type
                     'c_slat_c_wing' : 0.00, # Fraction of the wing chord occupied by slats
                     'b_slat_b_wing' : 0.00, # Fraction of the wing span occupied by slats
 
-                    'c_ail_c_wing' : 0.27, # Fraction of the wing chord occupied by aileron
+                    'c_ail_c_wing' : 0.24, # Fraction of the wing chord occupied by aileron
                     'b_ail_b_wing' : 0.34, # Fraction of the wing span occupied by aileron
                     
                     'h_ground' : 35.0*ft2m, # Distance to the ground for ground effect computation [m]
@@ -2113,7 +2111,7 @@ def standard_airplane(name='fokker100'):
                     'distance_takeoff' : 1800.0, # Required takeoff distance [m]
                     
                     'altitude_landing' : 0.0, # Altitude for landing computation [m]
-                    'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
+                    'distance_landing' : 1800.0, # Required landing distance [m]
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
                     'Mach_cruise' : 0.8, # Cruise Mach number
@@ -2126,7 +2124,7 @@ def standard_airplane(name='fokker100'):
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 10000*gravity, # Payload weight [N]
-                    'xcg_payload' : 14.4, # Longitudinal position of the Payload center of gravity [m]
+                    'xcg_payload' : 13.25, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 4*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
@@ -2235,7 +2233,7 @@ def standard_airplane(name='fokker100'):
                     'distance_takeoff' : 1800.0, # Required takeoff distance [m]
                     
                     'altitude_landing' : 0.0, # Altitude for landing computation [m]
-                    'distance_landing' : 1800.0, # Required landing distance [m] (The actual Fokker100 distance is 1350 m but it is very restrictive compared to the historical regression. Therefore I kept the same TO distance since the aircraft should takeoff and land at the same runway)
+                    'distance_landing' : 1800.0, # Required landing distance [m]
                     
                     'altitude_cruise' : 35000*ft2m, # Cruise altitude [m]
                     'Mach_cruise' : 0.8, # Cruise Mach number

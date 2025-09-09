@@ -6,6 +6,7 @@ from modules import utils as m
 
 airplane = dt.standard_airplane('my_airplane_1')
 dt.geometry(airplane)
+dt.plot3d(airplane)
 
 W0_guess = 50150*dt.gravity
 T0_guess = 0.3*W0_guess 
@@ -16,6 +17,7 @@ dt.balance(airplane)
 print(f"airplane['cm_w'] = {airplane['cm_w']}")
 print(f"airplane['xm_w'] = {airplane['xm_w']}")
 print("airplane['xnp'] = ",airplane['xnp'])
+print(f"(xnp - xm_w)/cma = {(airplane['xnp'] - airplane['xm_w'])/airplane['cm_w']}")
 print(f"airplane['x_mlg'] = {airplane['x_mlg']}")
 print(f"airplane['W0'] = {airplane['W0']}")
 print("airplane['xcg_fwd'] = ",airplane['xcg_fwd'])
@@ -36,6 +38,7 @@ print(f"airplane['xcg_v'] = {airplane['xcg_v']}")
 print(f"airplane['xcg_f'] = {airplane['xcg_f']}")
 print(f"airplane['xcg_nlg'] = {airplane['xcg_nlg']}")
 print(f"airplane['xcg_mlg'] = {airplane['xcg_mlg']}")
+print(f"(xcg_mlg - xm_w)/cma = {(airplane['xcg_mlg'] - airplane['xm_w'])/airplane['cm_w']}")
 print(f"airplane['xcg_eng'] = {airplane['xcg_eng']}")
 print(f"airplane['xcg_allelse'] = {airplane['xcg_allelse']}")
 print(f"airplane['W_fuel'] = {airplane['W_fuel']}")
