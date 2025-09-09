@@ -2124,7 +2124,7 @@ def standard_airplane(name='fokker100'):
                     'range_altcruise' : 200*nm2m, # Alternative cruise range [m]
                     
                     'W_payload' : 10000*gravity, # Payload weight [N]
-                    'xcg_payload' : 13.25, # Longitudinal position of the Payload center of gravity [m]
+                    'xcg_payload' : 13.34, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 4*91*gravity, # Crew weight [N]
                     'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
