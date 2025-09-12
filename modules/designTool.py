@@ -1424,7 +1424,7 @@ def doc(airplane, CEF=6.0, plot=False):
     rho_fuel = airplane['rho_fuel']
 
     # Estimate block fuel
-    W_fuel, _ = fuel_weight(W0, airplane, range_cruise=Rbl)
+    W_fuel, _, _, _, _, _, _, _, _, _ = fuel_weight(W0, airplane, range_cruise=Rbl)
     
     # UNIT CONVERSIONS
     
