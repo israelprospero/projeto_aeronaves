@@ -2080,8 +2080,8 @@ def standard_airplane(name='fokker100'):
                     'x_mlg' : 15.58, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
                     'z_lg' : -2.53, # Vertical position of the landing gear [m]
-                    'x_tailstrike' : 23.4, # Longitudinal position of critical tailstrike point [m]
-                    'z_tailstrike' : -1.54, # Vertical position of critical tailstrike point [m]
+                    'x_tailstrike' : 23.71, # Longitudinal position of critical tailstrike point [m]
+                    'z_tailstrike' : -0.92, # Vertical position of critical tailstrike point [m]
                     
                     'c_tank_c_w' : 0.5, # Fraction of the wing chord occupied by the fuel tank
                     'x_tank_c_w' : 0.17, # Fraction of the wing chord where fuel tank starts
