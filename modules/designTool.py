@@ -2127,7 +2127,7 @@ def standard_airplane(name='fokker100'):
                     'xcg_payload' : 13.34, # Longitudinal position of the Payload center of gravity [m]
                     
                     'W_crew' : 4*91*gravity, # Crew weight [N]
-                    'xcg_crew' : 2.5, # Longitudinal position of the Crew center of gravity [m]
+                    'xcg_crew' : 3.5, # Longitudinal position of the Crew center of gravity [m]
 
                     'block_range' : 400*nm2m, # Block range [m]
                     'block_time' : (1.0 + 2*40/60)*3600, # Block time [s]
