@@ -2066,13 +2066,13 @@ def standard_airplane(name='fokker100'):
                     'D_f' : 3.7, # Fuselage diameter [m]
                     
                     'x_n' : 13, # Longitudinal position of the nacelle frontal face [m]
-                    'y_n' : 4.01, # Lateral position of the nacelle centerline [m]
+                    'y_n' : 4.4, # Lateral position of the nacelle centerline [m]
                     'z_n' : -2.35, # Vertical position of the nacelle centerline [m]
                     'L_n' : 4.91, # Nacelle length [m]
                     'D_n' : 1.69, # Nacelle diameter [m]
                     
                     'n_engines' : 2, # Number of engines
-                    'n_engines_under_wing' : 2, # Number of engines installed under the wing
+                    'n_engines_under_wing' : 0, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 'BPR' : 12.5, # Engine bypass ratio
                                 'Cbase' : 0.7/3600,
@@ -2080,9 +2080,9 @@ def standard_airplane(name='fokker100'):
                                 },
                     
                     'x_nlg' : 4.11, # Longitudinal position of the nose landing gear [m]
-                    'x_mlg' : 15.58, # Longitudinal position of the main landing gear [m]
+                    'x_mlg' : 15.85, # Longitudinal position of the main landing gear [m]
                     'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
-                    'z_lg' : -2.53, # Vertical position of the landing gear [m]
+                    'z_lg' : -3.5, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.71, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -0.92, # Vertical position of critical tailstrike point [m]
                     

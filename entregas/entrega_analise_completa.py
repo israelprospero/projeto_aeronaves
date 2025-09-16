@@ -28,5 +28,7 @@ from modules import utils as m
 
 ## Full Analysis
 airplane = dt. standard_airplane ('my_airplane_1')
+#dt.geometry(airplane)
+#dt.plot3d(airplane)
 
-dt.analyze(airplane, print_log=True, plot=False)
+dt.analyze(airplane, print_log=True, plot=True)
