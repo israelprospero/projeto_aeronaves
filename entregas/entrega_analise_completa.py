@@ -28,14 +28,14 @@ from modules import utils as m
 
 ## Full Analysis
 airplane = dt. standard_airplane ('my_airplane_1')
-#dt.geometry(airplane)
+dt.geometry(airplane)
 #dt.plot3d(airplane)
 
-# dt.analyze(airplane, print_log=True, plot=True)
+dt.analyze(airplane, print_log=False, plot=False)
 
 print(f"airplane['cm_w'] = {airplane['cm_w']}")
 print(f"airplane['xm_w'] = {airplane['xm_w']}")
-print("airplane['xnp'] = ",airplane['xnp'])
+print(f"airplane['xnp'] = {airplane['xnp']}")
 print(f"(xnp - xm_w)/cma = {(airplane['xnp'] - airplane['xm_w'])/airplane['cm_w']}")
 print(f"airplane['x_mlg'] = {airplane['x_mlg']}")
 print(f"airplane['W0'] = {airplane['W0']}")
