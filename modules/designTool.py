@@ -2102,7 +2102,7 @@ def standard_airplane(name='fokker100'):
                     'c_slat_c_wing' : 0.00, # Fraction of the wing chord occupied by slats
                     'b_slat_b_wing' : 0.00, # Fraction of the wing span occupied by slats
 
-                    'c_ail_c_wing' : 0.24, # Fraction of the wing chord occupied by aileron
+                    'c_ail_c_wing' : 0.25, # Fraction of the wing chord occupied by aileron
                     'b_ail_b_wing' : 0.34, # Fraction of the wing span occupied by aileron
                     
                     'h_ground' : 35.0*ft2m, # Distance to the ground for ground effect computation [m]
