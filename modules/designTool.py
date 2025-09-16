@@ -51,6 +51,8 @@ def analyze(airplane = None,
         W0_guess = airplane['W0_guess']
     else:
         W0_guess = 5e3*airplane['S_w']
+        
+        # W0_guess = 50150*gravity
     
     if 'T0_guess' in airplane.keys():
         T0_guess = airplane['T0_guess']
@@ -630,10 +632,10 @@ def engineTSFC(Mach, altitude, airplane):
     C = Cbase*(1 - 0.15*BPR**0.65) * (1 + 0.28 * (1 + 0.063*BPR**2) * Mach) * sigma**(0.08)
     
     
-    kT = 0.25  
-    
     if airplane['name'] == 'fokker100':
         kT = (0.0013*BPR - 0.0397) * altitude/1000 - 0.0248*BPR + 0.7125
+    else:
+        kT = airplane['engine']['kT'] 
               
     return C, kT
 
@@ -2064,16 +2066,17 @@ def standard_airplane(name='fokker100'):
                     'D_f' : 3.7, # Fuselage diameter [m]
                     
                     'x_n' : 13, # Longitudinal position of the nacelle frontal face [m]
-                    'y_n' : 5.01, # Lateral position of the nacelle centerline [m]
+                    'y_n' : 4.01, # Lateral position of the nacelle centerline [m]
                     'z_n' : -2.35, # Vertical position of the nacelle centerline [m]
                     'L_n' : 4.91, # Nacelle length [m]
                     'D_n' : 1.69, # Nacelle diameter [m]
                     
                     'n_engines' : 2, # Number of engines
-                    'n_engines_under_wing' : 0, # Number of engines installed under the wing
+                    'n_engines_under_wing' : 2, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
-                                'BPR' : 13, # Engine bypass ratio
+                                'BPR' : 12.5, # Engine bypass ratio
                                 'Cbase' : 0.7/3600,
+                                'kT' : 0.25
                                 },
                     
                     'x_nlg' : 4.11, # Longitudinal position of the nose landing gear [m]
@@ -2083,16 +2086,16 @@ def standard_airplane(name='fokker100'):
                     'x_tailstrike' : 23.71, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -0.92, # Vertical position of critical tailstrike point [m]
                     
-                    'c_tank_c_w' : 0.5, # Fraction of the wing chord occupied by the fuel tank
-                    'x_tank_c_w' : 0.17, # Fraction of the wing chord where fuel tank starts
+                    'c_tank_c_w' : 0.525, # Fraction of the wing chord occupied by the fuel tank
+                    'x_tank_c_w' : 0.1, # Fraction of the wing chord where fuel tank starts
                     'b_tank_b_w_start' : 0.0, # Fraction of the wing semi-span where fuel tank starts
                     'b_tank_b_w_end' : 0.95, # Fraction of the wing semi-span where fuel tank ends
                     
                     'clmax_w' : 1.8, # Maximum lift coefficient of wing airfoil
                     'k_korn' : 0.91, # Airfoil technology factor for Korn equation (wave drag)
         
-                    'flap_type' : 'double slotted',  # Flap type
-                    'c_flap_c_wing' : 0.26, # Fraction of the wing chord occupied by flaps
+                    'flap_type' : 'single slotted',  # Flap type
+                    'c_flap_c_wing' : 0.2, # Fraction of the wing chord occupied by flaps
                     'b_flap_b_wing' : 0.60, # Fraction of the wing span occupied by flaps (including fuselage portion)
                     
                     'slat_type' : None, # Slat type
@@ -2196,6 +2199,7 @@ def standard_airplane(name='fokker100'):
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 'BPR' : 6, # Engine bypass ratio
                                 'Cbase' : 0.7/3600, # I adjusted this value by hand to match the fuel weight
+                                'kT' : 0.25
                                 },
                     
                     'x_nlg' : 3.7, # Longitudinal position of the nose landing gear [m]
