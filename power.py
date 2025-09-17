@@ -1,1 +1,0 @@
-print('o poder dos glúteos')
