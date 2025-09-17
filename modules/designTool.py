@@ -2072,7 +2072,7 @@ def standard_airplane(name='fokker100'):
                     'D_n' : 1.69, # Nacelle diameter [m]
                     
                     'n_engines' : 2, # Number of engines
-                    'n_engines_under_wing' : 0, # Number of engines installed under the wing
+                    'n_engines_under_wing' : 2, # Number of engines installed under the wing
                     'engine' : {'model' : 'Howe turbofan', # Check engineTSFC function for options
                                 'BPR' : 12.5, # Engine bypass ratio
                                 'Cbase' : 0.7/3600,
