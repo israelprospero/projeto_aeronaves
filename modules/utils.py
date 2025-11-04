@@ -10,7 +10,7 @@ H1 = 10700
 H2 = 10700
 
 def get_a(H):
-    # dt.atmosphere(H) retorna temperatura em °C, pressão, densidade, viscosidade
+    # dt.atmosphere(H) retorna temperatura em K, pressão, densidade, viscosidade
     T_K = dt.atmosphere(H)[0] 
     gamma = 1.4          
     R = 287.05           
@@ -23,7 +23,7 @@ def get_Mach_stall(airplane, W, config='takeoff', altitude=0):
     a = get_a(altitude)           
 
     Mach_chute = 0.3
-    _, CLmax, _ = dt.aerodynamics(airplane, Mach_chute, altitude, CL=1.2, W0_guess=W, highlift_config=config)
+    _, CLmax, _ = dt.aerodynamics(airplane, Mach_chute, altitude, CL=1.2, highlift_config=config)
     # print(CLmax)
     
     V_stall = np.sqrt(2 * W / (rho * S * CLmax))
@@ -50,12 +50,12 @@ def drag_polar(airplane, CL_cruise, num):
     
     labels = ['Cruise', 'Takeoff', 'Landing']
     
-    Mach_stall_takeoff, _ = get_Mach_stall(airplane, airplane['W0_guess'], config='takeoff')
-    Mach_stall_landing, _ = get_Mach_stall(airplane, 0.85*airplane['W0_guess'], config='landing') 
+    Mach_stall_takeoff, _ = get_Mach_stall(airplane, airplane['W0'], config='takeoff')
+    Mach_stall_landing, _ = get_Mach_stall(airplane, 0.85*airplane['W0'], config='landing') 
     configs = [
-        {'M': 0.8, 'H': 10700, 'W': 0.95*airplane['W0_guess'], 'config': 'clean'},
-        {'M': 1.2*Mach_stall_takeoff, 'H': 0, 'W': airplane['W0_guess'], 'config': 'takeoff'},
-        {'M': 1.3*Mach_stall_landing, 'H': 0, 'W': 0.85*airplane['W0_guess'],'config': 'landing'}
+        {'M': airplane['Mach_cruise'], 'H': airplane['altitude_cruise'], 'W': 0.95*airplane['W0'], 'config': 'clean'},
+        {'M': 1.2*Mach_stall_takeoff, 'H': 0, 'W': airplane['W0'], 'config': 'takeoff'},
+        {'M': 1.3*Mach_stall_landing, 'H': 0, 'W': 0.85*airplane['W0'],'config': 'landing'}
     ]
     
     colors = ['blue', 'red', 'green']
@@ -64,24 +64,24 @@ def drag_polar(airplane, CL_cruise, num):
         CL_list = []
         CD_list = []
         for CL in np.arange(-0.5, 3.0, 0.001):
-            CD, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL, conf['W'],
+            CD, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL,
                                         highlift_config=conf['config'],
                                         n_engines_failed=1 if conf['config']=='takeoff' else 0,
                                         lg_down=1 if conf['config']=='landing' else 0)
             CL_list.append(CL)
             CD_list.append(CD*1e4)
 
-        _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, conf['W'], highlift_config=conf['config'])
+        _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, highlift_config=conf['config'])
         
         mask = np.array(CL_list) <= CLmax
         plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], label=label)
         
         if label == 'Cruise':
-            CD_cruise, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise, conf['W'])
+            CD_cruise, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise)
             CD_cruise = CD_cruise*1e4
             plt.plot(CD_cruise, CL_cruise, 'ks', label='Cruise Point A1')
 
-        CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, conf['W'], highlift_config=conf['config'])
+        CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, highlift_config=conf['config'])
         plt.plot(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1], 'o', color=color)
         plt.text(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1] + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color, fontsize=14)
             
@@ -94,14 +94,17 @@ def drag_polar(airplane, CL_cruise, num):
     plt.grid(True)
     plt.show() 
         
-def plot_CD_x_M(M_range, H, CL, airplane, num):
+def plot_CD_x_M(M_range, H, CL, airplane, W, num):
     
     CD_list = []
     M_list = []
     for M in M_range:
         M_list.append(M)
-
-        CD, _, _ = dt.aerodynamics(airplane, M, H, CL, 0.95*airplane['W0_guess'])
+        
+        rho = dt.atmosphere(H)[2] 
+        V = M * get_a(H)
+        CL = W / (0.5 * rho * V**2 * airplane['S_w'])
+        CD, _, _ = dt.aerodynamics(airplane, M, H, CL)
         CD_list.append(CD*1e4)
     
     plt.figure()

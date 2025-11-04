@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 import modules.designTool as dt
 import copy
 from pprint import pprint
+import otimizacao.aerodinamica as aero
+import otimizacao.pesos as pesos
+import otimizacao.desempenho as desemp
+import otimizacao.estabilidade as estab
 
 
 airplane_base = dt.standard_airplane('my_airplane_1')
@@ -24,6 +28,7 @@ def get_5perc_var(val):
 
 airplane_ref = dt.standard_airplane('my_airplane_1')
 VAR_DICT = {
+    # 'var':            [lower bound, upper bound]
     'S_w':              [80, 100],
     'AR_w':             [8, 12],
     'taper_w':          list(get_5perc_var(airplane_ref['taper_w'])),
@@ -147,4 +152,9 @@ xopt = denormalize(xopt_norm)
 
 airplane_opt = update_airplane(copy.deepcopy(airplane_base), xopt)
 dt.analyze(airplane_opt, print_log=True, plot=False)
-# pprint(airplane_opt)
+pprint(airplane_opt)
+
+airplane_opt = aero.analise_aerodinamica(airplane_opt)
+#pesos.analise_pesos(airplane_opt)
+#desemp.analise_desempenho(airplane_opt)
+#estab.analise_estabilidade(airplane_opt)
