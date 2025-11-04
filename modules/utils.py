@@ -44,7 +44,7 @@ def LD_max(airplane, CL_range, M, H, Weight):
     LD_max = max(LD_list)
     CL_LDmax = CL_list[np.argmax(LD_list)]
     CD_LDmax, _, _ = dt.aerodynamics(airplane, M, H, CL_LDmax, Weight, highlift_config='clean')
-    print(f"(L/D)_max = {LD_max:.2f} at CL = {CL_LDmax:.2f}, CD = {CD_LDmax:.4f}")
+    #print(f"(L/D)_max = {LD_max:.2f} at CL = {CL_LDmax:.2f}, CD = {CD_LDmax:.4f}")
 
 def drag_polar(airplane, CL_cruise, num):
     

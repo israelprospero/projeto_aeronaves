@@ -13,7 +13,7 @@ nm2m = dt.nm2m
 pi = np.pi
 a = 331.3  # m/s^2
 
-def analise_aerodinamica(airplane):
+def analise_aerodinamica(airplane, show_results=True):
     
     # ------ CL - Cruise ------ #
     M = airplane['Mach_cruise']
@@ -24,14 +24,15 @@ def analise_aerodinamica(airplane):
     rho = dt.atmosphere(H)[2] 
     CL_cruise = 0.95 * MTOW / (0.5 * rho * V**2 * airplane['S_w']) # 95% of MTOW
 
-    print('------------------------- \n')
-    print(f'CL (cruise): {CL_cruise}')
-    print('------------------------- \n\n')
+    if show_results:
+        print('------------------------- \n')
+        print(f'CL (cruise): {CL_cruise}')
+        print('------------------------- \n\n')
 
     CD_cruise, _, dragDict = dt.aerodynamics(airplane, M, H, CL_cruise)
-    print(pprint.pformat(dragDict))
-
-    m.print_drag_table(CD_cruise, dragDict)
+    if show_results: 
+        print(pprint.pformat(dragDict))
+        m.print_drag_table(CD_cruise, dragDict)
 
     # ------ CL - Landing ------ #
     MLW = airplane['MLW_frac']*airplane['W0'] # MLW - maximum landing weight
@@ -49,20 +50,21 @@ def analise_aerodinamica(airplane):
                                                                         ind_drag_method='Nita',
                                                                         ind_drag_flap_method='Roskam')
 
-    print('------------------------- \n')
-    print(f'CL (landing): {CL_landing}')
-    print('------------------------- \n\n')
+    if show_results:
+        print('------------------------- \n')
+        print(f'CL (landing): {CL_landing}')
+        print('------------------------- \n\n')
 
-    m.print_drag_table(CD_landing, dragDict_landing)
+        m.print_drag_table(CD_landing, dragDict_landing)
 
-    ## Plots
-    # CD x M
-    M_range = np.arange(0.6, 0.9, 0.001)
-    m.plot_CD_x_M(M_range, H, CL_cruise, airplane,0.95*airplane['W0'] , '1') 
+        ## Plots
+        # CD x M
+        M_range = np.arange(0.6, 0.9, 0.001)
+        m.plot_CD_x_M(M_range, H, CL_cruise, airplane,0.95*airplane['W0'] , '1') 
 
-    # Drag Polar
-    m.drag_polar(airplane, CL_cruise, '1')
-    # TODO: checar funcao
+        # Drag Polar
+        m.drag_polar(airplane, CL_cruise, '1')
+        # TODO: checar funcao
 
     ## Aerodynamic Efficiency (LD)
 
@@ -70,7 +72,7 @@ def analise_aerodinamica(airplane):
     CL_range = np.arange(-0.5,2.9,0.001)
     m.LD_max(airplane, CL_range, M, H, 0.95 * MTOW)
     LD_cruise = CL_cruise/CD_cruise
-    print(f'(L/D)_cruise = {LD_cruise:.2f} at CL = {CL_cruise:.2f}, CD = {CD_cruise:.2f}\n\n')
+    if show_results: print(f'(L/D)_cruise = {LD_cruise:.2f} at CL = {CL_cruise:.2f}, CD = {CD_cruise:.2f}\n\n')
 
     # Update dictionary
     airplane['aero_CL_cruise'] = CL_cruise

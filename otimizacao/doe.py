@@ -2,8 +2,13 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy.optimize import minimize
+from aux_tools_doe import corrdot
 import auxmod as am
+from pymoo.operators.sampling.lhs import LHS
+from pymoo.core.problem import Problem
 import matplotlib.pyplot as plt
 import modules.designTool as dt
 import copy
@@ -13,13 +18,9 @@ import otimizacao.pesos as pesos
 import otimizacao.desempenho as desemp
 import otimizacao.estabilidade as estab
 
-
 airplane_base = dt.standard_airplane('my_airplane_1')
-xlist, flist, g_hist = [], [], []
-h_list = []
 
 def get_5perc_var(val):
-    """Return ±5% variation range."""
     if val > 0:
         return val - 0.05 * val, val + 0.05 * val
     else:
@@ -67,94 +68,78 @@ VAR_DICT = {
 
 VAR_NAMES = list(VAR_DICT.keys())
 
-x_min = np.array([VAR_DICT[k][0] for k in VAR_NAMES])
-x_max = np.array([VAR_DICT[k][1] for k in VAR_NAMES])
-
-# i = 0
-# for name in VAR_NAMES:
-#     print(f'{name}: {x_min[i]} and {x_max[i]}')
-#     i += 1
-
-# input()
-
-
-x0_physical = np.array([airplane_ref[k] for k in VAR_NAMES])
-
-def normalize(x): return (x - x_min) / (x_max - x_min)
-
-def denormalize(xn): return x_min + xn * (x_max - x_min)
-
-x0_norm = normalize(x0_physical)
-bounds_norm = [(0.0, 1.0) for _ in VAR_NAMES]
-
 def update_airplane(airplane, x):
     for key, val in zip(VAR_NAMES, x):
         airplane[key] = val
     return airplane
 
-
 def run_analysis(x):
 
     airplane = update_airplane(copy.deepcopy(airplane_base), x)
     dt.analyze(airplane, print_log=False, plot=False)
-
-    # minimize MTOW
-    f = airplane['W0']  
-
-    g = [
-        airplane['deltaS_wlan'],
-        0.4 - airplane['SM_fwd'],
-        airplane['SM_aft'] - 0.05,
-        0.75 - airplane['CLv'],
-        0.15 - airplane['frac_nlg_fwd'],
-        airplane['frac_nlg_aft'] - 0.04,
-        airplane['alpha_tipback'] * 180 / np.pi - 15,
-        airplane['alpha_tailstrike'] * 180 / np.pi - 10,
-        63 - airplane['phi_overturn'] * 180 / np.pi,
-    ]
     
-    h = [
-        airplane['tank_excess']
-    ]
+    airplane = aero.analise_aerodinamica(airplane, show_results=False)
 
-    return f, g, h
+    doe_out = [
+        airplane['W0'],
+        airplane['aero_CD_cruise']
+    ]  
 
+    return doe_out
 
-def objfun(xn):
-    x = denormalize(xn)
-    f, g, h = run_analysis(x)
-    xlist.append(x)
-    flist.append(f)
-    g_hist.append(g)
-    h_list.append(h)
-    return f
+def analise_doe():
+    n_samples = 100
+    sampler = LHS()
+    n_var = len(VAR_DICT)
 
+    lb = []
+    ub = []
+    for key in VAR_NAMES:
+        lb.append(VAR_DICT[key][0])
+        ub.append(VAR_DICT[key][1])
 
-def ineqconfun(xn):
-    x = denormalize(xn)
-    _, g, _ = run_analysis(x)
-    return g
+    problem = Problem(n_var=n_var, xl=lb, xu=ub)
+    samples = sampler(problem, n_samples).get("X")
 
-def eqconfun(xn):
-    x = denormalize(xn)
-    _, _, h = run_analysis(x)
-    return h
+    for i in range(n_var):
+        samples[:,i] = lb[i] + (ub[i] - lb[i])*samples[:,i]
+        
+    MTOW_samples = np.zeros(n_samples)
+    CD_cruise_samples = np.zeros(n_samples)
+    for i in range(n_samples):
 
-con_ineq = {'type': 'ineq', 'fun': ineqconfun}
-con_eq   = {'type': 'eq', 'fun': eqconfun}
-cons = [con_ineq, con_eq]
+        doe_res = run_analysis(samples[i,:])
+        
+        MTOW = doe_res[0]
+        CD_cruise = doe_res[1]
 
-result = minimize(objfun, x0_norm, constraints=cons, bounds=bounds_norm, method='SLSQP')
-xopt_norm = result.x
-xopt = denormalize(xopt_norm)
+        MTOW_samples[i] = MTOW
+        CD_cruise_samples[i] = CD_cruise
+        
+    data_dict = {var_name: samples[:, i] for i, var_name in enumerate(VAR_NAMES)}
 
-# print(result)
+    data_dict['MTOW'] = MTOW_samples
+    data_dict['CD_cruise'] = CD_cruise_samples
 
-airplane_opt = update_airplane(copy.deepcopy(airplane_base), xopt)
-dt.analyze(airplane_opt, print_log=True, plot=False)
-pprint(airplane_opt)
+    df = pd.DataFrame(data_dict)
 
-airplane_opt = aero.analise_aerodinamica(airplane_opt)
-#pesos.analise_pesos(airplane_opt)
-#desemp.analise_desempenho(airplane_opt)
-#estab.analise_estabilidade(airplane_opt)
+    x_cols = VAR_NAMES
+    y_cols = ['MTOW', 'CD_cruise']
+    correlation = df[x_cols + y_cols].corr().loc[x_cols, y_cols]
+    #print(correlation)
+
+    #plt.figure(figsize=(6, 4))
+    #sns.heatmap(correlation, annot=True, cmap="coolwarm", center=0)
+    #plt.title("Correlation between Inputs (X) and Outputs (Y)")
+    #plt.show()
+
+    related_inputs = correlation[correlation.abs() >= 0.1].dropna(how='all', axis=0).index.tolist()
+    print('\n\n---------------------------')
+    print(related_inputs)
+    print('---------------------------\n\n')
+
+    VAR_DICT_FILT = {}
+    for key in related_inputs:
+        VAR_DICT_FILT[key] = VAR_DICT[key]
+
+    return VAR_DICT_FILT
