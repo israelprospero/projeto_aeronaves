@@ -9,7 +9,7 @@ em vez de usar a linha de comando.
 COMO USAR:
 1. Altere as variáveis na seção "🎮 PAINEL DE CONTROLE".
 2. Rode este script:
-   $ python run_analysis.py 
+   $ python run_analysis.py
 """
 
 # === Importações da Suite e Ferramentas ===
