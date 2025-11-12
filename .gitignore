@@ -3,3 +3,4 @@
 *.xlsx
 !requirements.txt
 __pycache__
+analise_exploratoria/meu_teste_doe_customizado

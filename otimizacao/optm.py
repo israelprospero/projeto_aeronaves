@@ -28,8 +28,18 @@ def run_analysis(x):
     
     airplane = aero.analise_aerodinamica(airplane, show_results=False)
 
-    # minimize MTOW
+    # minimize MTOW - OBJECTIVE FUNCTION
     f = airplane['W0']
+    # f = 0.5*airplane['W0'] + airplane['aero_CD_cruise'] - airplane['aero_CL_cruise'] - airplane['aero_CLmax_landing']
+    # TODO: incluir penalidades
+    # Grandezas para inclusir
+    # aero_CD_cruise
+    # aero_CL_cruise
+    # aero_CLmax_landing
+    # aero_CD_landing
+    # combustivel? Mas a principio CD e CL contemplam isso
+    # algo de desempenho?
+    
 
     g = [
         airplane['deltaS_wlan'],
@@ -41,10 +51,14 @@ def run_analysis(x):
         airplane['alpha_tipback'] * 180 / np.pi - 15,
         airplane['alpha_tailstrike'] * 180 / np.pi - 10,
         63 - airplane['phi_overturn'] * 180 / np.pi,
+        0.9 - (airplane['c_tank_c_w'] + airplane['c_flap_c_wing']),
+        0.9 - (airplane['c_tank_c_w'] + airplane['c_ail_c_wing']),
+        0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing'])
     ]
     
     h = [
-        airplane['tank_excess']
+        airplane['tank_excess'],
+        airplane['xnp'] - 0.45
     ]
 
     return f, g, h
@@ -113,7 +127,14 @@ airplane_opt = dt.analyze(airplane_opt, print_log=False, plot=False)
 dt.plot3d(airplane_opt)
 # pprint(airplane_opt)
 
+input('ENTER para analise aerodinamica')
 airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=False)
-#pesos.analise_pesos(airplane_opt)
-#desemp.analise_desempenho(airplane_opt)
-#estab.analise_estabilidade(airplane_opt)
+
+input('ENTER para analise de pesos')
+pesos.analise_pesos(airplane_opt)
+
+input('ENTER para analise de desempenho')
+desemp.analise_desempenho(airplane_opt)
+
+input('ENTER para analise de estabilidade')
+estab.analise_estabilidade(airplane_opt)

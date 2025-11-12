@@ -30,7 +30,7 @@ import modules.designTool as dt
 
 # 1. ESCOLHA A ANÁLISE:
 #    Opções: 'doe' ou 'oat'
-TIPO_ANALISE = 'oat'
+TIPO_ANALISE = 'doe'
 
 # 2. DEFINA A AERONAVE DE REFERÊNCIA (BASELINE)
 #    (Carregue o avião aqui)
@@ -46,7 +46,7 @@ PASTA_SAIDA = "meu_teste_doe_customizado"
 
 # 4. CONFIGURAÇÕES COMUNS
 #    (Deixe 'None' para usar a lista MESTRA completa do mdo_analysis_suite)
-LISTA_SAIDAS = ['W0', 'DOC', 'SM_aft'] 
+LISTA_SAIDAS = None
 # LISTA_SAIDAS = None # Exemplo: Usar TODAS as saídas
 
 # 5. CONFIGURAÇÕES ESPECÍFICAS DO 'DOE':
@@ -56,11 +56,11 @@ config_doe = {
     'plot_style': 'full_report', # 'none', 'pairgrid', 'individual', etc.
     
     # Deixe 'None' para usar a lista MESTRA
-    'inputs': ['S_w', 'AR_w', 'W_payload'], 
+    'inputs': None, 
     # 'inputs': None, # Exemplo: Usar TODOS os inputs
     
     # Deixe 'None' para usar o SUBSET MESTRE
-    'subset': ['S_w', 'W0', 'DOC'],
+    'subset': None,
     # 'subset': None, # Exemplo: Usar o subset padrão
     
     'chunk_x': 3,
@@ -75,7 +75,7 @@ config_oat = {
     'range': (0.8, 1.2), # Corrigido: 0.8 em vez de 0.
     
     # Deixe 'None' para usar a lista MESTRA
-    'inputs': ['S_w', 'AR_w'],
+    'inputs': None,
     # 'inputs': None, # Exemplo: Usar TODOS os inputs
 }
 # ================================================================

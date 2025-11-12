@@ -2032,7 +2032,7 @@ def standard_airplane(name='fokker100'):
                     #'W0_guess' : 40000*gravity # Guess for MTOW
                     }
 
-    elif name == 'my_airplane_1':
+    elif name == 'my_airplane_1': # opcao 3x2
 
         airplane = {'type': 'transport', # Can be 'transport', 'fighter', or 'general'
                     

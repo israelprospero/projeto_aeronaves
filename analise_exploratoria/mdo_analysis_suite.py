@@ -30,18 +30,109 @@ import modules.designTool as dt
 # === DEFINIÇÕES MESTRAS (MASTER DEFINITIONS) ===
 # ================================================================
 
+# TODO: definir saidas
+# TODO: definir bounds
+# TODO: definir bounds para perfil da asa
+# TODO: definir bounds para perfil da empenagem
+# TODO: restricao: landing gear > diametro da nacelle
+# TODO: restricao: EH nao deve ficar para fora do aviao
+# TODO: restricao: EV nao deve ficar para fora do aviao
+# TODO: restricao: flap/tanque/aileron nao devem ocupar 100% da asa
+
+def get_perc_var(val):
+    perc = 0.1
+    if val > 0:
+        return val - perc * val, val + perc * val
+    else:
+        return val + perc * val, val - perc * val
+
+airplane_ref = dt.standard_airplane('my_airplane_1')
 MASTER_DOE_BOUNDS = {
-    'S_w': (80.0, 110.0), 
-    'AR_w': (8.0, 10.0), 
-    'sweep_w': (np.deg2rad(15), np.deg2rad(25)), 
-    'Cht': (0.8, 1.2), 
-    'Cvt': (0.06, 0.09), 
-    'W_payload': (8000*9.81, 12000*9.81), 
-    'range_cruise': (1200*1852, 2500*1852) 
+    'S_w':              [70, 105],
+    'AR_w':             [7, 11],
+    'taper_w':          [0.2, 0.4],
+    'sweep_w':          [20*np.pi/180, 30*np.pi/180],
+    'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
+    'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
+    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
+    'tcr_w':            list(get_perc_var(airplane_ref['tcr_w'])),
+    'tct_w':            list(get_perc_var(airplane_ref['tct_w'])),
+    'Cht':              [0.9, 1.15],
+    'Lc_h':             [3, 5.5],
+    'AR_h':             [3.5, 5.5],
+    'taper_h':          [0.3, 0.5],
+    'sweep_h':          [23*np.pi/180, 35*np.pi/180],
+    'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
+    'zr_h':             [0.6, 0.9],
+    'tcr_h':            [0.05, 0.15],
+    'tct_h':            [0.05, 0.15],
+    'Cvt':              [0.06, 0.11],
+    'Lb_v':             [0.35, 0.65],
+    'AR_v':             [1, 2],
+    'taper_v':          [0.3, 0.6],
+    'sweep_v':          [30*np.pi/180, 50*np.pi/180],
+    'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
+    'x_n':              [airplane_ref['xr_w'] - 3, airplane_ref['xr_w'] + 4],
+    'y_n':              list(get_perc_var(airplane_ref['y_n'])),
+    'z_n':              list(get_perc_var(airplane_ref['z_n'])),
+    'L_n':              [3, 4.5],
+    'D_n':              [1.5, 2.3],
+    'x_nlg':            [2.5, 5.5],
+    'x_mlg':            [airplane_ref['xr_w'] + 1.7, airplane_ref['xr_w'] + 3.9],
+    'y_mlg':            [2, 4],
+    'z_lg':             [-4, -2],
+    'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
+    'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
+    'c_tank_c_w':       list(get_perc_var(airplane_ref['c_tank_c_w'])),
+    'b_tank_b_w_end':   list(get_perc_var(airplane_ref['b_tank_b_w_end'])),
+    'c_flap_c_wing':    list(get_perc_var(airplane_ref['c_flap_c_wing'])),
+    'b_flap_b_wing':    list(get_perc_var(airplane_ref['b_flap_b_wing'])),
+    'c_ail_c_wing':     list(get_perc_var(airplane_ref['c_ail_c_wing'])),
+    'b_ail_b_wing':     list(get_perc_var(airplane_ref['b_ail_b_wing']))
 }
 
 MASTER_OAT_INPUTS = [
-    'S_w', 'AR_w', 'sweep_w', 'Cht', 'W_payload'
+    'S_w',
+    'AR_w',
+    'taper_w',
+    'sweep_w',
+    'dihedral_w',
+    'xr_w',
+    'zr_w',
+    'tcr_w',
+    'tct_w',
+    'Cht',
+    'Lc_h',
+    'AR_h',
+    'taper_h',
+    'sweep_h',
+    'dihedral_h',
+    'zr_h',
+    'tcr_h',
+    'tct_h',
+    'Cvt',
+    'Lb_v',
+    'AR_v',
+    'taper_v',
+    'sweep_v',
+    'zr_v',
+    'x_n',
+    'y_n',
+    'z_n',
+    'L_n',
+    'D_n',
+    'x_nlg',
+    'x_mlg',
+    'y_mlg',
+    'z_lg',
+    'x_tailstrike',
+    'z_tailstrike',
+    'c_tank_c_w',
+    'b_tank_b_w_end',
+    'c_flap_c_wing',
+    'b_flap_b_wing',
+    'c_ail_c_wing',
+    'b_ail_b_wing'
 ]
 
 MASTER_OUTPUTS = [
@@ -50,7 +141,8 @@ MASTER_OUTPUTS = [
 ]
 
 MASTER_PAIRGRID_SUBSET = [
-    'S_w', 'AR_w', 'W_payload', 'W0', 'DOC', 'SM_aft' 
+    'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
+    'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
 ]
 # ================================================================
 

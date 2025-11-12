@@ -31,9 +31,9 @@ airplane = dt. standard_airplane ('my_airplane_1')
 # dt.geometry(airplane)
 #dt.plot3d(airplane)
 
-dt.analyze(airplane, print_log=False, plot=False)
+airplane = dt.analyze(airplane, print_log=False, plot=False)
 
-print(airplane)
+pprint.pprint(airplane)
 
 # print(f"airplane['cm_w'] = {airplane['cm_w']}")
 # print(f"airplane['xm_w'] = {airplane['xm_w']}")
