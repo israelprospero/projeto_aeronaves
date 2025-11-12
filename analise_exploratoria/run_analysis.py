@@ -30,7 +30,7 @@ import modules.designTool as dt
 
 # 1. ESCOLHA A ANÁLISE:
 #    Opções: 'doe' ou 'oat'
-TIPO_ANALISE = 'doe'
+TIPO_ANALISE = 'oat'
 
 # 2. DEFINA A AERONAVE DE REFERÊNCIA (BASELINE)
 #    (Carregue o avião aqui)

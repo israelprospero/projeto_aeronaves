@@ -3,8 +3,6 @@ MDO Analysis Suite
 ==================
 
 Conjunto de ferramentas para análise de aeronaves integrado com o designTool.py.
-
-...
 """
 
 # === IMPORTAÇÕES ===
@@ -12,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import math
 from pymoo.core.problem import Problem
 from pymoo.operators.sampling.lhs import LHS
 import copy
@@ -20,24 +19,29 @@ import os
 import sys
 import argparse
 from tabulate import tabulate
+
+# Configuração de Caminho para Importação
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 if parent_dir not in sys.path:
     sys.path.append(parent_dir)
-import modules.designTool as dt
+
+# Tenta importar o designTool
+try:
+    import modules.designTool as dt
+except ImportError:
+    try:
+        import designTool as dt
+    except ImportError:
+        print("AVISO: Não foi possível importar 'designTool'. Verifique os caminhos.")
+        class StubDesignTool:
+            def standard_airplane(self, name): return {}
+            def analyze(self, airplane, print_log=False, plot=False): pass
+        dt = StubDesignTool()
 
 # ================================================================
 # === DEFINIÇÕES MESTRAS (MASTER DEFINITIONS) ===
 # ================================================================
-
-# TODO: definir saidas
-# TODO: definir bounds
-# TODO: definir bounds para perfil da asa
-# TODO: definir bounds para perfil da empenagem
-# TODO: restricao: landing gear > diametro da nacelle
-# TODO: restricao: EH nao deve ficar para fora do aviao
-# TODO: restricao: EV nao deve ficar para fora do aviao
-# TODO: restricao: flap/tanque/aileron nao devem ocupar 100% da asa
 
 def get_perc_var(val):
     perc = 0.1
@@ -46,17 +50,34 @@ def get_perc_var(val):
     else:
         return val + perc * val, val - perc * val
 
-airplane_ref = dt.standard_airplane('my_airplane_1')
+# Tenta carregar a aeronave para definir os bounds dinâmicos
+try:
+    airplane_ref = dt.standard_airplane('my_airplane_1')
+except:
+    airplane_ref = {} 
+
+default_airplane_params = {
+    'xr_w': 10.0, 'zr_w': 0.0, 'tcr_w': 0.12, 'tct_w': 0.12,
+    'zr_h': 0.0, 'tcr_h': 0.1, 'tct_h': 0.1,
+    'zr_v': 0.0, 'x_n': 8.0, 'y_n': 2.0, 'z_n': -1.0,
+    'x_tailstrike': 20.0, 'z_tailstrike': 1.0,
+    'c_tank_c_w': 0.5, 'b_tank_b_w_end': 0.8,
+    'c_flap_c_wing': 0.2, 'b_flap_b_wing': 0.6,
+    'c_ail_c_wing': 0.2, 'b_ail_b_wing': 0.3
+}
+if not airplane_ref:
+    airplane_ref = default_airplane_params
+
 MASTER_DOE_BOUNDS = {
     'S_w':              [70, 105],
     'AR_w':             [7, 11],
     'taper_w':          [0.2, 0.4],
     'sweep_w':          [20*np.pi/180, 30*np.pi/180],
     'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
-    'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
-    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
-    'tcr_w':            list(get_perc_var(airplane_ref['tcr_w'])),
-    'tct_w':            list(get_perc_var(airplane_ref['tct_w'])),
+    'xr_w':             list(get_perc_var(airplane_ref.get('xr_w', default_airplane_params['xr_w']))),
+    'zr_w':             list(get_perc_var(airplane_ref.get('zr_w', default_airplane_params['zr_w']))),
+    'tcr_w':            list(get_perc_var(airplane_ref.get('tcr_w', default_airplane_params['tcr_w']))),
+    'tct_w':            list(get_perc_var(airplane_ref.get('tct_w', default_airplane_params['tct_w']))),
     'Cht':              [0.9, 1.15],
     'Lc_h':             [3, 5.5],
     'AR_h':             [3.5, 5.5],
@@ -71,69 +92,27 @@ MASTER_DOE_BOUNDS = {
     'AR_v':             [1, 2],
     'taper_v':          [0.3, 0.6],
     'sweep_v':          [30*np.pi/180, 50*np.pi/180],
-    'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
-    'x_n':              [airplane_ref['xr_w'] - 3, airplane_ref['xr_w'] + 4],
-    'y_n':              list(get_perc_var(airplane_ref['y_n'])),
-    'z_n':              list(get_perc_var(airplane_ref['z_n'])),
+    'zr_v':             list(get_perc_var(airplane_ref.get('zr_v', default_airplane_params['zr_v']))),
+    'x_n':              [airplane_ref.get('xr_w', default_airplane_params['xr_w']) - 3, airplane_ref.get('xr_w', default_airplane_params['xr_w']) + 4],
+    'y_n':              list(get_perc_var(airplane_ref.get('y_n', default_airplane_params['y_n']))),
+    'z_n':              list(get_perc_var(airplane_ref.get('z_n', default_airplane_params['z_n']))),
     'L_n':              [3, 4.5],
     'D_n':              [1.5, 2.3],
     'x_nlg':            [2.5, 5.5],
-    'x_mlg':            [airplane_ref['xr_w'] + 1.7, airplane_ref['xr_w'] + 3.9],
+    'x_mlg':            [airplane_ref.get('xr_w', default_airplane_params['xr_w']) + 1.7, airplane_ref.get('xr_w', default_airplane_params['xr_w']) + 3.9],
     'y_mlg':            [2, 4],
     'z_lg':             [-4, -2],
-    'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
-    'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
-    'c_tank_c_w':       list(get_perc_var(airplane_ref['c_tank_c_w'])),
-    'b_tank_b_w_end':   list(get_perc_var(airplane_ref['b_tank_b_w_end'])),
-    'c_flap_c_wing':    list(get_perc_var(airplane_ref['c_flap_c_wing'])),
-    'b_flap_b_wing':    list(get_perc_var(airplane_ref['b_flap_b_wing'])),
-    'c_ail_c_wing':     list(get_perc_var(airplane_ref['c_ail_c_wing'])),
-    'b_ail_b_wing':     list(get_perc_var(airplane_ref['b_ail_b_wing']))
+    'x_tailstrike':     list(get_perc_var(airplane_ref.get('x_tailstrike', default_airplane_params['x_tailstrike']))),
+    'z_tailstrike':     list(get_perc_var(airplane_ref.get('z_tailstrike', default_airplane_params['z_tailstrike']))),
+    'c_tank_c_w':       list(get_perc_var(airplane_ref.get('c_tank_c_w', default_airplane_params['c_tank_c_w']))),
+    'b_tank_b_w_end':   list(get_perc_var(airplane_ref.get('b_tank_b_w_end', default_airplane_params['b_tank_b_w_end']))),
+    'c_flap_c_wing':    list(get_perc_var(airplane_ref.get('c_flap_c_wing', default_airplane_params['c_flap_c_wing']))),
+    'b_flap_b_wing':    list(get_perc_var(airplane_ref.get('b_flap_b_wing', default_airplane_params['b_flap_b_wing']))),
+    'c_ail_c_wing':     list(get_perc_var(airplane_ref.get('c_ail_c_wing', default_airplane_params['c_ail_c_wing']))),
+    'b_ail_b_wing':     list(get_perc_var(airplane_ref.get('b_ail_b_wing', default_airplane_params['b_ail_b_wing'])))
 }
 
-MASTER_OAT_INPUTS = [
-    'S_w',
-    'AR_w',
-    'taper_w',
-    'sweep_w',
-    'dihedral_w',
-    'xr_w',
-    'zr_w',
-    'tcr_w',
-    'tct_w',
-    'Cht',
-    'Lc_h',
-    'AR_h',
-    'taper_h',
-    'sweep_h',
-    'dihedral_h',
-    'zr_h',
-    'tcr_h',
-    'tct_h',
-    'Cvt',
-    'Lb_v',
-    'AR_v',
-    'taper_v',
-    'sweep_v',
-    'zr_v',
-    'x_n',
-    'y_n',
-    'z_n',
-    'L_n',
-    'D_n',
-    'x_nlg',
-    'x_mlg',
-    'y_mlg',
-    'z_lg',
-    'x_tailstrike',
-    'z_tailstrike',
-    'c_tank_c_w',
-    'b_tank_b_w_end',
-    'c_flap_c_wing',
-    'b_flap_b_wing',
-    'c_ail_c_wing',
-    'b_ail_b_wing'
-]
+MASTER_OAT_INPUTS = list(MASTER_DOE_BOUNDS.keys())
 
 MASTER_OUTPUTS = [
     'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
@@ -144,7 +123,6 @@ MASTER_PAIRGRID_SUBSET = [
     'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
     'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
 ]
-# ================================================================
 
 # =============================================================================
 # === FUNÇÃO 1: ANÁLISE PARAMÉTRICA (OAT) ===
@@ -158,17 +136,18 @@ def analise_parametrica(baseline_airplane,
     
     # Validação de entrada
     if num_passos < 3 or num_passos % 2 == 0:
-        print(f"AVISO: 'num_passos' deve ser ímpar e >= 3. "
-              f"Ajustando para {max(3, num_passos + (1 - num_passos % 2))}.")
+        print(f"AVISO: 'num_passos' deve ser ímpar e >= 3. Ajustando para {max(3, num_passos + (1 - num_passos % 2))}.")
         num_passos = max(3, num_passos + (1 - num_passos % 2))
 
     print("--- Iniciando Análise Paramétrica (OAT) Robusta ---")
     
-    # Criar diretório de saída se não existir
-    output_plots_dir = os.path.join(output_dir, "oat_plots_individuais")
-    if not os.path.exists(output_plots_dir):
-        os.makedirs(output_plots_dir)
-        print(f"Criado diretório: {output_plots_dir}")
+    # Criação de diretórios de saída
+    output_plots_dir_grid = os.path.join(output_dir, "oat_plots_grid")
+    output_plots_dir_single = os.path.join(output_dir, "oat_plots_single")
+    if not os.path.exists(output_plots_dir_grid):
+        os.makedirs(output_plots_dir_grid)
+    if not os.path.exists(output_plots_dir_single):
+        os.makedirs(output_plots_dir_single)
 
     csv_filename = os.path.join(output_dir, "oat_analise_detalhada.csv")
 
@@ -182,13 +161,11 @@ def analise_parametrica(baseline_airplane,
             y_baseline_valores[var_out] = baseline_analisada.get(var_out, None)
         print("Baseline calculada com sucesso.")
     except Exception as e:
-        print(f"ERRO FATAL: A análise da aeronave de baseline falhou. "
-              f"Não é possível continuar. Erro: {e}")
+        print(f"ERRO FATAL: A análise da aeronave de baseline falhou. Erro: {e}")
         return None, None
     
     resultados_grafico = {}
     dados_para_csv = []
-    df = None 
 
     for var_in in variaveis_entrada:
         print(f"Analisando variável de entrada: {var_in}")
@@ -218,7 +195,6 @@ def analise_parametrica(baseline_airplane,
                     dados_saida_var[var_out].append(valor_saida)
                     linha_csv[var_out] = valor_saida
             except Exception as e:
-                print(f"ERRO: Análise falhou para {var_in} = {valor_perturbado}. Erro: {e}. Adicionando 'None'.")
                 for var_out in variaveis_saida:
                     dados_saida_var[var_out].append(None)
                     linha_csv[var_out] = None
@@ -231,75 +207,143 @@ def analise_parametrica(baseline_airplane,
 
     print("--- Análise concluída. Gerando gráficos. ---")
 
+    # === GRÁFICO ÚNICO (ESPAGUETE) MELHORADO ===
+    num_vars_entrada = len(variaveis_entrada)
+    if num_vars_entrada > 0:
+        if num_vars_entrada <= 20:
+            colors = plt.cm.tab20(np.linspace(0, 1, num_vars_entrada))
+        else:
+            # CORREÇÃO AQUI: Usando nipy_spectral que existe no matplotlib.cm
+            colors = plt.cm.nipy_spectral(np.linspace(0, 1, num_vars_entrada))
+    else:
+        colors = []
+
+    color_map = {var_in: colors[i] for i, var_in in enumerate(variaveis_entrada)}
+
     for var_out in variaveis_saida:
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(12, 8))
+
         for var_in in variaveis_entrada:
             if var_in in resultados_grafico:
                 eixo_x = resultados_grafico[var_in]['vetor_normalizado_x']
                 eixo_y = resultados_grafico[var_in]['dados_saida'][var_out]
-                plt.plot(eixo_x, eixo_y, 'o-', label=f"{var_in}")
+                
+                plt.plot(eixo_x, eixo_y, 'o-', 
+                         label=f"{var_in}", 
+                         color=color_map.get(var_in, 'gray'),
+                         markersize=4, 
+                         linewidth=1.5)
         
-        plt.title(f"Análise de Sensibilidade (OAT) para: {var_out}", fontsize=16)
-        plt.xlabel("Variação % em relação ao valor de referência", fontsize=12)
-        plt.ylabel(f"Valor de Saída: {var_out}", fontsize=12)
-        plt.legend(loc='best')
-        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.title(f"Análise de Sensibilidade (OAT) para: {var_out}", fontsize=18, weight='bold')
+        plt.xlabel("Variação % em relação ao valor de referência", fontsize=14)
+        plt.ylabel(f"Valor de Saída: {var_out}", fontsize=14)
+        plt.grid(True, linestyle='--', alpha=0.7)
         plt.axvline(x=100, color='red', linestyle=':', linewidth=2, label='Baseline (100%)')
+        plt.tick_params(axis='both', which='major', labelsize=10)
+
+        if num_vars_entrada > 0:
+            n_legend_cols = math.ceil(len(variaveis_entrada) / 5) 
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), ncol=n_legend_cols, 
+                       fontsize='small', title="Variáveis de Entrada", title_fontsize='medium')
         
-        plot_filename = os.path.join(output_plots_dir, f"oat_plot__{var_out}.png")
+        plt.tight_layout(rect=[0, 0, 0.85, 1])
+
+        plot_filename_single = os.path.join(output_plots_dir_single, f"oat_plot_single__{var_out}.png")
         try:
-            plt.savefig(plot_filename, dpi=150, bbox_inches='tight')
-            print(f"Gráfico salvo em: {plot_filename}")
+            plt.savefig(plot_filename_single, dpi=200, bbox_inches='tight')
         except Exception as e:
-            print(f"ERRO ao salvar gráfico {plot_filename}: {e}")
+            print(f"ERRO ao salvar gráfico 'Espaguete' {plot_filename_single}: {e}")
         plt.close()
 
-    print(f"--- Gráficos salvos em '{output_plots_dir}'. ---")
+
+    # === GRÁFICO GRID (SMALL MULTIPLES) ===
+    sns.set(style="whitegrid")
+    
+    for var_out in variaveis_saida:
+        num_vars = len(resultados_grafico)
+        if num_vars == 0: continue
+
+        n_cols = 5
+        n_rows = math.ceil(num_vars / n_cols)
+        
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 3.5, n_rows * 3), sharey=True)
+        axes_flat = axes.flatten()
+        
+        fig.suptitle(f"Sensibilidade (OAT): Impacto em {var_out} (Grid)", fontsize=20, weight='bold', y=1.01)
+        
+        idx_plot = 0
+        for var_in, res in resultados_grafico.items():
+            ax = axes_flat[idx_plot]
+            x_vals = res['vetor_normalizado_x']
+            y_vals = res['dados_saida'][var_out]
+            
+            ax.plot(x_vals, y_vals, 'o-', color='#2b7bba', markersize=4, linewidth=2)
+            ax.axvline(x=100, color='#e74c3c', linestyle=':', linewidth=1.5, label='Ref')
+            
+            ax.set_title(var_in, fontsize=11, weight='bold')
+            
+            if idx_plot >= (n_rows - 1) * n_cols: 
+                ax.set_xlabel("% Ref")
+            
+            idx_plot += 1
+            
+        for i in range(idx_plot, len(axes_flat)):
+            axes_flat[i].axis('off')
+
+        plt.tight_layout(rect=[0, 0, 1, 0.98])
+        
+        plot_filename_grid = os.path.join(output_plots_dir_grid, f"oat_GRID__{var_out}.png")
+        try:
+            plt.savefig(plot_filename_grid, dpi=200, bbox_inches='tight')
+        except Exception as e:
+            print(f"ERRO ao salvar gráfico GRID {plot_filename_grid}: {e}")
+        plt.close()
+
+    print(f"--- Gráficos salvos em '{output_dir}'. ---")
     
     try:
-        print(f"\nSalvando dados detalhados em '{csv_filename}'...")
+        print(f"\nSalvando CSV em '{csv_filename}'...")
         df = pd.DataFrame(dados_para_csv)
         colunas_ordem = ['variavel_entrada', 'percentual_entrada', 'valor_entrada'] + variaveis_saida
         df = df[colunas_ordem]
         df.to_csv(csv_filename, index=False, float_format='%.5e')
-        print(f"Arquivo '{csv_filename}' salvo com sucesso.")
     except Exception as e:
         print(f"ERRO ao salvar CSV: {e}")
 
     print("\n--- Tabela de Análise de Sensibilidade (no Ponto de Referência) ---")
-    
     tabela_sensibilidade = []
     headers = ["Variável Saída (y)", "Variável Entrada (x)", "Sensib. Absoluta (dy/dx)", "Sensib. Relativa (dy/y*)/(dx/x*)"]
-    
     idx_base = num_passos // 2
-    idx_pre = idx_base - 1
-    idx_post = idx_base + 1
+    idx_pre, idx_post = idx_base - 1, idx_base + 1
     
     for var_out in variaveis_saida:
         y_star = y_baseline_valores.get(var_out)
-        if y_star is None or y_star == 0:
-            print(f"AVISO: Pulando sensibilidade para '{var_out}' (valor baseline nulo ou zero).")
-            continue
+        if not y_star: continue
             
         for var_in in variaveis_entrada:
             if var_in not in resultados_grafico: continue
-            x_star = baseline_airplane[var_in]
+            x_star = baseline_airplane.get(var_in)
             res = resultados_grafico[var_in]
-            
             try:
                 x_pre, x_post = res['vetor_absoluto_x'][idx_pre], res['vetor_absoluto_x'][idx_post]
                 y_pre, y_post = res['dados_saida'][var_out][idx_pre], res['dados_saida'][var_out][idx_post]
+                if y_pre is None or y_post is None: continue
                 
-                if y_pre is None or y_post is None: raise TypeError("Ponto de análise falhou.")
-                delta_y, delta_x = y_post - y_pre, x_post - x_pre
-                if delta_x == 0: raise ZeroDivisionError("delta_x é zero.")
+                delta_y = y_post - y_pre
+                delta_x = x_post - x_pre
+                if delta_x == 0: continue
 
                 abs_sens = delta_y / delta_x
-                rel_sens = abs_sens * (x_star / y_star)
+                rel_sens = abs_sens * (x_star / y_star) if x_star and y_star else 0
                 tabela_sensibilidade.append([var_out, var_in, abs_sens, rel_sens])
-            except Exception as e:
-                tabela_sensibilidade.append([var_out, var_in, f"ERRO ({e})", f"ERRO ({e})"])
+            except:
+                pass
     
+    try:
+        tabela_sensibilidade.sort(key=lambda x: abs(float(x[3])) if isinstance(x[3], (int, float)) else 0, reverse=True)
+    except:
+        pass
+
     print(tabulate(tabela_sensibilidade, headers=headers, floatfmt=".4f", tablefmt="grid"))
     print("--- Fim da Análise Paramétrica ---")
 
@@ -309,38 +353,31 @@ def analise_parametrica(baseline_airplane,
 # === FUNÇÃO 2: DESIGN OF EXPERIMENTS (DOE) ===
 # =============================================================================
 
-# --- Funções Auxiliares de Plotagem ---
-
 def corrdot(*args, **kwargs):
-    """(Esta função é IDÊNTICA à versão anterior)"""
     x_data, y_data = args[0], args[1]
     valid_data = pd.DataFrame({'x': x_data, 'y': y_data}).dropna()
-    
     if len(valid_data) < 2: corr_r = np.nan
     else: corr_r = valid_data['x'].corr(valid_data['y'], 'pearson')
-        
-    corr_text = f"{corr_r:2.2f}".replace("0.", ".")
-    ax = plt.gca(); ax.set_axis_off()
     
-    if pd.isna(corr_r):
-        ax.annotate("NaN", [.5, .5,], xycoords="axes fraction", ha='center', va='center', fontsize=20, color='gray')
-        return
-
-    marker_size = abs(corr_r) * 10000
-    ax.scatter([.5], [.5], marker_size, [corr_r], alpha=0.6, cmap="coolwarm", vmin=-1, vmax=1, transform=ax.transAxes)
     font_size = abs(corr_r) * 40 + 5
-    ax.annotate(corr_text, [.5, .5,], xycoords="axes fraction", ha='center', va='center', fontsize=font_size)
+    marker_size = abs(corr_r) * 10000
+    
+    ax = plt.gca(); ax.set_axis_off()
+    if pd.isna(corr_r): return
+
+    ax.scatter([.5], [.5], marker_size, [corr_r], alpha=0.6, cmap="coolwarm", vmin=-1, vmax=1, transform=ax.transAxes)
+    corr_text = f"{corr_r:2.2f}".replace("0.", ".")
+    ax.annotate(corr_text, [.5, .5], xycoords="axes fraction", ha='center', va='center', fontsize=font_size)
 
 def _gerar_pairgrid(df_plot, title, filename, salvar_graficos, show_plot=True):
-    """(Esta função é IDÊNTICA à versão anterior)"""
     try:
         n_plot_vars = len(df_plot.columns)
         altura_subplot = max(1.5, min(3.0, 15 / n_plot_vars))
         
         sns.set(style='white', font_scale=1.1)
         fig = sns.PairGrid(df_plot, diag_sharey=False, height=altura_subplot)
-        fig.map_diag(sns.histplot, kde=True)
-        fig.map_lower(sns.regplot, lowess=True, scatter_kws={'alpha': 0.3}, line_kws={'color': 'black', 'lw': 2})
+        fig.map_diag(sns.histplot, kde=True, color='#4a90e2')
+        fig.map_lower(sns.regplot, lowess=True, scatter_kws={'alpha': 0.3, 's': 15, 'color': '#2c3e50'}, line_kws={'color': '#e74c3c', 'lw': 2})
         fig.map_upper(corrdot)
         fig.fig.suptitle(title, y=1.02, fontsize=16, weight='bold')
         plt.tight_layout()
@@ -351,13 +388,11 @@ def _gerar_pairgrid(df_plot, title, filename, salvar_graficos, show_plot=True):
                 print(f"   Gráfico de matriz salvo em '{filename}'")
             except Exception as e:
                 print(f"   ERRO ao salvar gráfico: {e}")
-        
         if show_plot: plt.show()
         else: plt.close(fig.fig)
     except Exception as e:
-        print(f"   ERRO ao gerar PairGrid para '{title}': {e}")
+        print(f"   ERRO ao gerar PairGrid: {e}")
         plt.close()
-
 
 def executar_doe_analysis(
         baseline_airplane,
@@ -371,13 +406,9 @@ def executar_doe_analysis(
         matrix_chunk_X=3,
         matrix_chunk_Y=2,
         salvar_graficos=True):
-    """
-    (Esta função é IDÊNTICA à versão anterior)
-    """
     
     print(f"--- Iniciando DOE com {n_samples} amostras ---")
     
-    # --- Configuração de Caminhos de Saída ---
     csv_filename = os.path.join(output_dir, f"doe_results_{plot_style}_{n_samples}s.csv")
     individual_plots_dir = os.path.join(output_dir, "doe_plots_individuais")
     matrix_plots_dir = os.path.join(output_dir, "doe_plots_matrizes")
@@ -387,14 +418,9 @@ def executar_doe_analysis(
         os.makedirs(output_dir)
         print(f"Criado diretório de saída: {output_dir}")
 
-    # 1. Preparar o problema para o Pymoo
     variaveis_entrada_nomes = list(variaveis_entrada_bounds.keys())
-    
-    if not variaveis_entrada_nomes:
-        print("ERRO FATAL: Nenhuma variável de entrada válida foi selecionada para o DOE.")
-        return None
-    if not variaveis_saida:
-        print("ERRO FATAL: Nenhuma variável de saída válida foi selecionada.")
+    if not variaveis_entrada_nomes or not variaveis_saida:
+        print("ERRO: Entradas ou Saídas não definidas.")
         return None
         
     n_var = len(variaveis_entrada_nomes)
@@ -402,17 +428,14 @@ def executar_doe_analysis(
     ub = [variaveis_entrada_bounds[key][1] for key in variaveis_entrada_nomes]
 
     problem = Problem(n_var=n_var, xl=lb, xu=ub)
-
-    # 2. Gerar as amostras
     print(f"Gerando amostras com {sampler_method.__class__.__name__}...")
     X_samples = sampler_method(problem, n_samples).get("X")
 
-    # 3. Iterar pelas amostras
     all_results_data = []
     print(f"Executando {n_samples} amostras...")
+    
     for i in range(n_samples):
         x_sample = X_samples[i, :]
-        
         aeronave_temp = copy.deepcopy(baseline_airplane)
         input_dict = {}
         
@@ -423,273 +446,140 @@ def executar_doe_analysis(
         try:
             dt.analyze(aeronave_temp, print_log=False, plot=False)
             output_dict = {var_out: aeronave_temp.get(var_out, np.nan) for var_out in variaveis_saida}
-        except Exception as e:
+        except:
             output_dict = {var_out: np.nan for var_out in variaveis_saida}
         
         all_results_data.append({**input_dict, **output_dict})
 
-    print(f"--- Análise DOE concluída ({n_samples} amostras executadas) ---")
-
-    # 4. Criar DataFrame e salvar em CSV
+    print("--- Análise DOE concluída ---")
     df = pd.DataFrame(all_results_data)
     
     if csv_filename and salvar_graficos:
         try:
             df.to_csv(csv_filename, index=False, float_format='%.5e')
-            print(f"Resultados completos salvos em '{csv_filename}'")
+            print(f"Resultados salvos em '{csv_filename}'")
         except Exception as e:
-            print(f"ERRO ao salvar CSV: {e}")
+            print(f"ERRO CSV: {e}")
 
-    # 5. Gerar os gráficos
-    if not salvar_graficos:
-        print("Salvamento de gráficos e CSV desativado.")
-        return df
+    if not salvar_graficos: return df
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         
-        # --- PARTE 1: GRÁFICOS INDIVIDUAIS ---
         if plot_style == 'individual' or plot_style == 'full_report':
-            print("Gerando gráficos individuais (Entrada vs. Saída)...")
+            print("Gerando gráficos individuais...")
             if not os.path.exists(individual_plots_dir): os.makedirs(individual_plots_dir)
-            n_plots = len(variaveis_entrada_nomes) * len(variaveis_saida)
-            print(f"Total de {n_plots} gráficos a serem salvos em '{individual_plots_dir}/'")
             
-            plot_count = 1
             for var_out in variaveis_saida:
                 for var_in in variaveis_entrada_nomes:
-                    if df[var_in].isnull().all() or df[var_out].isnull().all():
-                        plot_count += 1
-                        continue
+                    if df[var_in].isnull().all() or df[var_out].isnull().all(): continue
                     
-                    plt.figure(figsize=(8, 5))
-                    sns.regplot(data=df, x=var_in, y=var_out, scatter_kws={'alpha': 0.5}, line_kws={'color': 'red', 'lw': 2})
-                    plt.title(f"{var_out} vs. {var_in}", fontsize=16)
-                    plt.xlabel(f"Entrada: {var_in}", fontsize=12)
-                    plt.ylabel(f"Saída: {var_out}", fontsize=12)
-                    plt.grid(True, linestyle='--', alpha=0.6)
+                    plt.figure(figsize=(6, 4))
+                    sns.regplot(data=df, x=var_in, y=var_out, scatter_kws={'alpha': 0.5, 'color': '#34495e'}, line_kws={'color': '#e67e22', 'lw': 2})
+                    plt.title(f"{var_out} vs. {var_in}")
+                    plt.grid(True, linestyle='--', alpha=0.5)
                     
-                    safe_filename = os.path.join(individual_plots_dir, f"plot__{var_out}_vs_{var_in}.png")
-                    plt.savefig(safe_filename, dpi=150, bbox_inches='tight')
+                    fname = os.path.join(individual_plots_dir, f"plot__{var_out}_vs_{var_in}.png")
+                    plt.savefig(fname, dpi=100, bbox_inches='tight')
                     plt.close()
-                    plot_count += 1
-            print(f"Gráficos individuais salvos com sucesso.")
+            print("Gráficos individuais salvos.")
 
-        # --- PARTE 2: GRÁFICOS (PairGrid) ---
         if plot_style == 'pairgrid' or plot_style == 'full_report':
-            print("Gerando gráfico de matriz de correlação (PairGrid)...")
-            
+            print("Gerando PairGrid...")
             if plot_vars_subset:
-                plot_vars_existentes = [v for v in plot_vars_subset if v in df.columns]
-                if not plot_vars_existentes:
-                     print("AVISO: Nenhuma das variáveis do '--subset' foi encontrada. Pulando PairGrid.")
-                     df_plot = pd.DataFrame() 
-                else:
-                    print(f"Usando subset para PairGrid: {plot_vars_existentes}")
-                    df_plot = df[plot_vars_existentes]
+                cols = [v for v in plot_vars_subset if v in df.columns]
+                if cols: _gerar_pairgrid(df[cols], "Matriz de Correlação DOE", pairgrid_filename, salvar_graficos, show_plot=False)
             else:
-                print("AVISO: '--subset' não definido. Plotando PairGrid com TODAS as variáveis.")
-                df_plot = df
+                _gerar_pairgrid(df, "Matriz de Correlação DOE", pairgrid_filename, salvar_graficos, show_plot=False)
 
-            if df_plot.empty:
-                print("Nenhuma variável de plotagem selecionada. Pulando PairGrid.")
-            else:
-                _gerar_pairgrid(df_plot, "Matriz de Correlação DOE", pairgrid_filename, 
-                                salvar_graficos, show_plot=(plot_style == 'pairgrid'))
-
-        # --- PARTE 3: MATRIZES COMBINADAS ---
         if plot_style == 'matrix_combinations' or plot_style == 'full_report':
-            print("Gerando gráficos de matrizes combinadas (X vs Y)...")
+            print("Gerando matrizes combinadas...")
             if not os.path.exists(matrix_plots_dir): os.makedirs(matrix_plots_dir)
-
+            
             input_chunks = [variaveis_entrada_nomes[i:i + matrix_chunk_X] for i in range(0, len(variaveis_entrada_nomes), matrix_chunk_X)]
             output_chunks = [variaveis_saida[i:i + matrix_chunk_Y] for i in range(0, len(variaveis_saida), matrix_chunk_Y)]
             
-            total_plots = len(input_chunks) * len(output_chunks)
-            print(f"Serão geradas {total_plots} matrizes (blocos de {matrix_chunk_X}x{matrix_chunk_Y})...")
-            
-            plot_count = 1
+            count = 0
             for i, in_chunk in enumerate(input_chunks):
                 for j, out_chunk in enumerate(output_chunks):
-                    plot_vars_subset = in_chunk + out_chunk
-                    df_plot = df[plot_vars_subset]
-                    title = f"Matriz Combinada (Entradas Bloco {i+1} / Saídas Bloco {j+1})"
-                    filename = os.path.join(matrix_plots_dir, f"matriz_X{i+1}_Y{j+1}.png")
-                    
-                    print(f"   Gerando matriz {plot_count}/{total_plots}...")
-                    
-                    _gerar_pairgrid(df_plot, title, filename, salvar_graficos, show_plot=False)
-                    plot_count += 1
-            print(f"Gráficos de matrizes combinadas salvos em '{matrix_plots_dir}'")
-            
-        # --- PARTE 4: OUTROS ESTILOS ---
-        elif plot_style == 'none':
-            print("Geração de gráficos pulada por solicitação.")
-        elif plot_style not in ['individual', 'full_report', 'pairgrid', 'matrix_combinations']:
-            print(f"AVISO: '{plot_style}' não é um 'plot_style' reconhecido.")
+                    df_sub = df[in_chunk + out_chunk]
+                    fname = os.path.join(matrix_plots_dir, f"matriz_X{i+1}_Y{j+1}.png")
+                    _gerar_pairgrid(df_sub, f"Matriz X{i+1} - Y{j+1}", fname, salvar_graficos, show_plot=False)
+                    count += 1
+            print("Matrizes combinadas salvas.")
 
     return df
 
 # =============================================================================
-# === BLOCO PRINCIPAL DE EXECUÇÃO (Interface de Linha de Comando) ===
+# === CLI ===
 # =============================================================================
 
 def main():
-    """
-    Função principal que gerencia a interface de linha de comando (CLI)
-    para selecionar e executar as análises.
-    """
-    
-    # --- Configuração do Parser Principal ---
-    parser = argparse.ArgumentParser(
-        description="MDO Analysis Suite - Executa análises OAT ou DOE.",
-        formatter_class=argparse.RawTextHelpFormatter
-    )
-    
-    # --- Argumentos Globais ---
-    parser.add_argument(
-        '-dir', '--output_dir',
-        type=str,
-        default="mdo_analysis_output",
-        help="Diretório de saída principal para salvar CSVs e gráficos.\n(Padrão: 'mdo_analysis_output')"
-    )
-    
-    parser.add_argument(
-        '-b', '--baseline',
-        type=str,
-        default='fokker100',
-        help="Nome da aeronave de referência para carregar via dt.standard_airplane().\n(Padrão: 'fokker100')"
-    )
+    parser = argparse.ArgumentParser(description="MDO Analysis Suite", formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-dir', '--output_dir', type=str, default="mdo_analysis_output", help="Output directory")
+    parser.add_argument('-b', '--baseline', type=str, default='fokker100', help="Baseline airplane name")
 
-    subparsers = parser.subparsers(dest='analysis_type', required=True, help="O tipo de análise a ser executada.")
+    subparsers = parser.add_subparsers(dest='analysis_type', required=True)
 
-    # --- Sub-parser para 'doe' ---
-    parser_doe = subparsers.add_parser('doe', help="Executa uma análise de Design of Experiments (DOE).", description="Executa uma análise DOE (ex: LHS) com N amostras.")
-    parser_doe.add_argument('-n', '--n_samples', type=int, default=100, help="Número de amostras para o DOE. (Padrão: 100)")
-    parser_doe.add_argument('-p', '--plot_style', type=str, default='full_report', choices=['none', 'pairgrid', 'individual', 'matrix_combinations', 'full_report'], help="O tipo de relatório gráfico. (Padrão: 'full_report')")
-    parser_doe.add_argument('--no_save', action='store_false', dest='salvar_graficos', help="Desativa o salvamento de gráficos e CSVs.")
-    parser_doe.add_argument('-i', '--inputs', nargs='+', default=None, help="Lista de variáveis de ENTRADA para o DOE (ex: S_w AR_w). \n(Padrão: usa TODAS as variáveis da lista mestra)")
-    parser_doe.add_argument('-o', '--outputs', nargs='+', default=None, help="Lista de variáveis de SAÍDA para monitorar (ex: W0 DOC). \n(Padrão: usa TODAS as variáveis da lista mestra)")
-    parser_doe.add_argument('--subset', nargs='+', default=None, help="Lista de variáveis (entradas+saídas) para o PairGrid de resumo. \n(Padrão: usa o subset default da lista mestra)")
-    parser_doe.add_argument('--chunk_x', type=int, default=3, help="Número de entradas (X) por gráfico de matriz. (Padrão: 3)")
-    parser_doe.add_argument('--chunk_y', type=int, default=2, help="Número de saídas (Y) por gráfico de matriz. (Padrão: 2)")
+    # DOE
+    p_doe = subparsers.add_parser('doe')
+    p_doe.add_argument('-n', '--n_samples', type=int, default=100)
+    p_doe.add_argument('-p', '--plot_style', type=str, default='full_report')
+    p_doe.add_argument('--no_save', action='store_false', dest='salvar_graficos')
+    p_doe.add_argument('-i', '--inputs', nargs='+', default=None)
+    p_doe.add_argument('-o', '--outputs', nargs='+', default=None)
+    p_doe.add_argument('--subset', nargs='+', default=None)
+    p_doe.add_argument('--chunk_x', type=int, default=3)
+    p_doe.add_argument('--chunk_y', type=int, default=2)
 
-    # --- Sub-parser para 'oat' ---
-    parser_oat = subparsers.add_parser('oat', help="Executa uma análise paramétrica One-at-a-Time (OAT).", description="Executa uma varredura OAT em torno do baseline.")
-    parser_oat.add_argument('-s', '--steps', type=int, default=11, help="Número de passos da varredura (ÍMPAR). (Padrão: 11)")
-    parser_oat.add_argument('-r', '--range', type=float, nargs=2, default=[0.8, 1.2], metavar=('MIN', 'MAX'), help="Intervalo percentual da varredura. (Padrão: 0.8 1.2)")
-    parser_oat.add_argument('-i', '--inputs', nargs='+', default=None, help="Lista de variáveis de ENTRADA para o OAT (ex: S_w AR_w). \n(Padrão: usa TODAS as variáveis da lista mestra)")
-    parser_oat.add_argument('-o', '--outputs', nargs='+', default=None, help="Lista de variáveis de SAÍDA para monitorar (ex: W0 DOC). \n(Padrão: usa TODAS as variáveis da lista mestra)")
+    # OAT
+    p_oat = subparsers.add_parser('oat')
+    p_oat.add_argument('-s', '--steps', type=int, default=11)
+    p_oat.add_argument('-r', '--range', type=float, nargs=2, default=[0.8, 1.2])
+    p_oat.add_argument('-i', '--inputs', nargs='+', default=None)
+    p_oat.add_argument('-o', '--outputs', nargs='+', default=None)
 
-    # --- Analisa os argumentos da linha de comando ---
     args = parser.parse_args()
 
-    # --- Carregar Aeronave Base ---
-    print(f"Carregando aeronave de referência: {args.baseline}...")
+    print(f"Carregando baseline: {args.baseline}...")
     try:
         aeronave_base = dt.standard_airplane(args.baseline)
-        print("Aeronave carregada com sucesso.")
     except Exception as e:
-        print(f"ERRO FATAL: Não foi possível carregar a aeronave de referência '{args.baseline}'.")
-        print(f"Verifique se o nome está correto e disponível em dt.standard_airplane().")
-        print(f"Erro: {e}")
-        return 
+        print(f"Erro ao carregar aeronave: {e}")
+        return
 
-    # --- Lógica de Validação e Seleção de Saídas ---
-    variaveis_saida_selecionadas = []
-    if args.outputs is None:
-        print("Usando lista MESTRA de variáveis de SAÍDA.")
-        variaveis_saida_selecionadas = MASTER_OUTPUTS
+    vars_out = []
+    if args.outputs:
+        for v in args.outputs:
+            if v in MASTER_OUTPUTS: vars_out.append(v)
     else:
-        print(f"Usando lista PERSONALIZADA de variáveis de SAÍDA: {args.outputs}")
-        for var in args.outputs:
-            if var in MASTER_OUTPUTS:
-                variaveis_saida_selecionadas.append(var)
-            else:
-                print(f"   -> AVISO: Variável de saída '{var}' não encontrada na lista mestra. Ignorando.")
-        if not variaveis_saida_selecionadas:
-            print("ERRO: Nenhuma variável de saída válida foi selecionada. Abortando.")
-            return 
-
-    # --- Execução da Análise Solicitada ---
+        vars_out = MASTER_OUTPUTS
     
+    if not vars_out:
+        print("Erro: Nenhuma saída válida.")
+        return
+
     if args.analysis_type == 'doe':
+        vars_in_bounds = {}
+        src = args.inputs if args.inputs else MASTER_DOE_BOUNDS
+        for v in (src if args.inputs else MASTER_DOE_BOUNDS.keys()):
+            if v in MASTER_DOE_BOUNDS: vars_in_bounds[v] = MASTER_DOE_BOUNDS[v]
         
-        # --- Lógica de Validação e Seleção (DOE Inputs) ---
-        variaveis_entrada_bounds_doe = {}
-        input_list_source = args.inputs
+        subset = args.subset if args.subset else MASTER_PAIRGRID_SUBSET
         
-        if input_list_source is None:
-            print("Usando lista MESTRA de variáveis de ENTRADA (DOE).")
-            variaveis_entrada_bounds_doe = MASTER_DOE_BOUNDS
-        else:
-            print(f"Usando lista PERSONALIZADA de variáveis de ENTRADA (DOE): {input_list_source}")
-            for var in input_list_source:
-                if var in MASTER_DOE_BOUNDS:
-                    variaveis_entrada_bounds_doe[var] = MASTER_DOE_BOUNDS[var]
-                else:
-                    print(f"   -> AVISO: Variável de entrada '{var}' não encontrada na lista mestra de BOUNDS. Ignorando.")
-        
-        if not variaveis_entrada_bounds_doe:
-            print("ERRO: Nenhuma variável de entrada válida foi selecionada para o DOE. Abortando.")
-            return
-
-        # --- Lógica de Seleção (DOE Pairgrid Subset) ---
-        subset_selecionado = args.subset
-        if subset_selecionado is None:
-            print("Usando SUBSET padrão para o PairGrid de resumo.")
-            subset_selecionado = MASTER_PAIRGRID_SUBSET
-        else:
-            print(f"Usando SUBSET PERSONALIZADO para o PairGrid: {subset_selecionado}")
-
-        print(f"Iniciando análise 'doe' com {args.n_samples} amostras...")
-        executar_doe_analysis(
-            baseline_airplane=aeronave_base,
-            variaveis_entrada_bounds=variaveis_entrada_bounds_doe,
-            variaveis_saida=variaveis_saida_selecionadas,
-            n_samples=args.n_samples,
-            plot_style=args.plot_style,
-            plot_vars_subset=subset_selecionado,
-            output_dir=args.output_dir,
-            salvar_graficos=args.salvar_graficos,
-            matrix_chunk_X=args.chunk_x,
-            matrix_chunk_Y=args.chunk_y
-        )
+        executar_doe_analysis(aeronave_base, vars_in_bounds, vars_out, args.n_samples, 
+                              plot_style=args.plot_style, plot_vars_subset=subset, output_dir=args.output_dir,
+                              salvar_graficos=args.salvar_graficos, matrix_chunk_X=args.chunk_x, matrix_chunk_Y=args.chunk_y)
 
     elif args.analysis_type == 'oat':
-        
-        # --- Lógica de Validação e Seleção (OAT Inputs) ---
-        variaveis_entrada_oat = []
-        input_list_source = args.inputs
-        
-        if input_list_source is None:
-            print("Usando lista MESTRA de variáveis de ENTRADA (OAT).")
-            variaveis_entrada_oat = MASTER_OAT_INPUTS
-        else:
-            print(f"Usando lista PERSONALIZADA de variáveis de ENTRADA (OAT): {input_list_source}")
-            for var in input_list_source:
-                if var in MASTER_OAT_INPUTS: 
-                    variaveis_entrada_oat.append(var)
-                else:
-                    print(f"   -> AVISO: Variável de entrada '{var}' não encontrada na lista mestra de OAT. Ignorando.")
-        
-        if not variaveis_entrada_oat:
-            print("ERRO: Nenhuma variável de entrada válida foi selecionada para o OAT. Abortando.")
-            return
+        vars_in = []
+        src = args.inputs if args.inputs else MASTER_OAT_INPUTS
+        for v in src:
+            if v in MASTER_OAT_INPUTS: vars_in.append(v)
+            
+        analise_parametrica(aeronave_base, vars_in, vars_out, tuple(args.range), args.steps, args.output_dir)
 
-        print(f"Iniciando análise 'oat' com {args.steps} passos...")
-        analise_parametrica(
-            baseline_airplane=aeronave_base,
-            variaveis_entrada=variaveis_entrada_oat,
-            variaveis_saida=variaveis_saida_selecionadas,
-            intervalo_percentual=tuple(args.range),
-            num_passos=args.steps,
-            output_dir=args.output_dir
-        )
-
-    print(f"\n--- Execução do script finalizada ---")
-    print(f"Resultados salvos no diretório: '{os.path.abspath(args.output_dir)}'")
-
+    print(f"Fim. Resultados em: {os.path.abspath(args.output_dir)}")
 
 if __name__ == "__main__":
     main()
