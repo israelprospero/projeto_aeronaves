@@ -10,7 +10,10 @@ import otimizacao.aerodinamica as aero
 import otimizacao.pesos as pesos
 import otimizacao.desempenho as desemp
 import otimizacao.estabilidade as estab
-from otimizacao.doe import analise_doe
+import json
+import matplotlib.pyplot as plt
+
+ENABLE_REALTIME_PLOTS = False 
 
 airplane_base = dt.standard_airplane('my_airplane_1')
 xlist, flist, g_hist = [], [], []
@@ -28,19 +31,9 @@ def run_analysis(x):
     
     airplane = aero.analise_aerodinamica(airplane, show_results=False)
 
-    # minimize MTOW - OBJECTIVE FUNCTION
     f = airplane['W0']
-    # f = 0.5*airplane['W0'] + airplane['aero_CD_cruise'] - airplane['aero_CL_cruise'] - airplane['aero_CLmax_landing']
-    # TODO: incluir penalidades
-    # Grandezas para inclusir
-    # aero_CD_cruise
-    # aero_CL_cruise
-    # aero_CLmax_landing
-    # aero_CD_landing
-    # combustivel? Mas a principio CD e CL contemplam isso
-    # algo de desempenho?
-    
 
+    # default is g(x) >= 0
     g = [
         airplane['deltaS_wlan'],
         0.4 - airplane['SM_fwd'],
@@ -53,16 +46,14 @@ def run_analysis(x):
         63 - airplane['phi_overturn'] * 180 / np.pi,
         0.9 - (airplane['c_tank_c_w'] + airplane['c_flap_c_wing']),
         0.9 - (airplane['c_tank_c_w'] + airplane['c_ail_c_wing']),
-        0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing'])
+        0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
+        airplane['tank_excess']
     ]
     
     h = [
-        airplane['tank_excess'],
-        airplane['xnp'] - 0.45
     ]
 
     return f, g, h
-
 
 def objfun(xn):
     x = denormalize(xn)
@@ -72,6 +63,28 @@ def objfun(xn):
     flist.append(f)
     g_hist.append(g)
     h_list.append(h)
+    
+    if ENABLE_REALTIME_PLOTS:
+    
+        line_f.set_xdata(range(len(flist)))
+        line_f.set_ydata(flist)
+        ax_f.relim()
+        ax_f.autoscale_view()
+        fig_f.canvas.draw()
+        fig_f.canvas.flush_events()
+
+        iterations = range(len(xlist))
+        arr = np.array(xlist)  # (iterations, num_vars)
+
+        for subplot_id, var_index in enumerate(tracked_indices):
+            lines_x[subplot_id].set_xdata(iterations)
+            lines_x[subplot_id].set_ydata(arr[:, var_index])
+            ax_x[subplot_id].relim()
+            ax_x[subplot_id].autoscale_view()
+
+        fig_x.canvas.draw()
+        fig_x.canvas.flush_events()
+    
     return f
 
 
@@ -85,12 +98,61 @@ def eqconfun(xn):
     _, _, h = run_analysis(x)
     return h
 
-VAR_DICT_FILT = analise_doe()
-pprint(VAR_DICT_FILT)
+def get_perc_var(val):
+    perc = 0.1
+    if val > 0:
+        return val - perc * val, val + perc * val
+    else:
+        return val + perc * val, val - perc * val
+
+airplane_ref = dt.standard_airplane('my_airplane_1')
+VAR_DICT_FILT = {
+    'S_w':              [70, 110],
+    'AR_w':             [7, 11],
+    'taper_w':          [0.2, 0.4],
+    'sweep_w':          [20*np.pi/180, 30*np.pi/180],
+    'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
+    'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
+    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
+    'tcr_w':            [0.12, 0.16],
+    'tct_w':            [0.08, 0.11],
+    'Cht':              [0.9, 1.15],
+    'Lc_h':             [3, 4.3],
+    'AR_h':             [3.5, 5.5],
+    'taper_h':          [0.3, 0.5],
+    'sweep_h':          [23*np.pi/180, 35*np.pi/180],
+    'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
+    'zr_h':             [0.6, 0.9],
+    # 'tcr_h':            [0.05, 0.15],
+    # 'tct_h':            [0.05, 0.15],
+    'Cvt':              [0.06, 0.11],
+    'Lb_v':             [0.35, 0.45],
+    'AR_v':             [1, 2],
+    'taper_v':          [0.3, 0.6],
+    'sweep_v':          [30*np.pi/180, 50*np.pi/180],
+    'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
+    'x_n':              [airplane_ref['xr_w'] - 2.5, airplane_ref['xr_w'] + 4],
+    'y_n':              list(get_perc_var(airplane_ref['y_n'])),
+    'z_n':              list(get_perc_var(airplane_ref['z_n'])),
+    'L_n':              [4, 4.5],
+    'D_n':              [1.5, 2.3],
+    'x_nlg':            [2.5, 5.5],
+    'x_mlg':            [airplane_ref['xr_w'] + 1.7, airplane_ref['xr_w'] + 3.9],
+    'y_mlg':            [2, 4],
+    'z_lg':             [-4, -2],
+    'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
+    'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
+    'c_tank_c_w':       [0.45, 0.55],
+    'b_tank_b_w_end':   [0.8, 0.95],
+    'c_flap_c_wing':    [0.2, 0.3],
+    'b_flap_b_wing':    [0.55, 0.7],
+    'c_ail_c_wing':     [0.2, 0.35],
+    'b_ail_b_wing':     [0.3, 0.4]
+}
+
 VAR_NAMES_FILT = list(VAR_DICT_FILT.keys())
 
-input('Press ENTER to start optimization')
-print('Starating optmization...')
+print('Starting optmization...')
 
 x_min = np.array([VAR_DICT_FILT[k][0] for k in VAR_NAMES_FILT])
 x_max = np.array([VAR_DICT_FILT[k][1] for k in VAR_NAMES_FILT])
@@ -108,13 +170,54 @@ con_ineq = {'type': 'ineq', 'fun': ineqconfun}
 con_eq   = {'type': 'eq', 'fun': eqconfun}
 cons = [con_ineq, con_eq]
 
+if ENABLE_REALTIME_PLOTS:
+    VARS_TO_TRACK = [
+        'S_w',
+        'AR_w',
+    ]
+
+    plt.ion()
+
+    fig_f, ax_f = plt.subplots()
+    line_f, = ax_f.plot([], [], '-o')
+    ax_f.set_xlabel('Iteration')
+    ax_f.set_ylabel('Objective f')
+    ax_f.set_title('Optimization Progress')
+    plt.show()
+
+    tracked_indices = [VAR_NAMES_FILT.index(v) for v in VARS_TO_TRACK]
+    num_tracked = len(tracked_indices)
+
+    fig_x, ax_x = plt.subplots(num_tracked, 1, figsize=(6, 2*num_tracked), sharex=True)
+    if num_tracked == 1:
+        ax_x = [ax_x]
+
+    lines_x = []
+
+    for i, varname in enumerate(VARS_TO_TRACK):
+        line_var, = ax_x[i].plot([], [], '-')
+        lines_x.append(line_var)
+        ax_x[i].set_ylabel(varname)
+        
+        ymin, ymax = VAR_DICT_FILT[varname]
+        ax_x[i].set_ylim([ymin, ymax])
+        
+    ax_x[-1].set_xlabel('Iteration')
+    fig_x.suptitle('Evolution of Selected Variables')
+    plt.tight_layout()
+    plt.show()
+
 result = minimize(objfun, x0_norm, constraints=cons, bounds=bounds_norm, method='SLSQP')
+print(result)
+
 xopt_norm = result.x
 xopt = denormalize(xopt_norm)
 
-# print(result)
-
 airplane_opt = update_airplane(copy.deepcopy(airplane_base), xopt)
+airplane_opt = dt.analyze(airplane_opt, print_log=False, plot=False)
+dt.plot3d(airplane_opt)
+
+airplane_base = dt.analyze(airplane_base, print_log=False, plot=False)
 
 # Print each key comparison
 all_keys = sorted(set(airplane_base) | set(airplane_opt))
@@ -122,19 +225,20 @@ for key in all_keys:
     val1 = airplane_base.get(key, '—')
     val2 = airplane_opt.get(key, '—')
     print(f"{key}: {val1}\t {val2}")
+    
+with open("airplane_opt.json", "w") as file:
+    json.dump(airplane_opt, file, indent=4)
 
-airplane_opt = dt.analyze(airplane_opt, print_log=False, plot=False)
-dt.plot3d(airplane_opt)
-# pprint(airplane_opt)
+# input('ENTER para analise aerodinamica')
+# airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=False)
 
-input('ENTER para analise aerodinamica')
-airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=False)
+# input('ENTER para analise de pesos')
+# pesos.analise_pesos(airplane_opt)
 
-input('ENTER para analise de pesos')
-pesos.analise_pesos(airplane_opt)
+# input('ENTER para analise de desempenho')
+# desemp.analise_desempenho(airplane_opt)
 
-input('ENTER para analise de desempenho')
-desemp.analise_desempenho(airplane_opt)
+# input('ENTER para analise de estabilidade')
+# estab.analise_estabilidade(airplane_opt)
 
-input('ENTER para analise de estabilidade')
-estab.analise_estabilidade(airplane_opt)
+input()
