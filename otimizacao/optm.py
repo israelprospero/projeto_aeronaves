@@ -13,10 +13,10 @@ import otimizacao.estabilidade as estab
 import json
 import matplotlib.pyplot as plt
 
-ENABLE_REALTIME_PLOTS = False 
+ENABLE_REALTIME_PLOTS = True 
 
 airplane_base = dt.standard_airplane('my_airplane_1')
-xlist, flist, g_hist = [], [], []
+xlist, flist, g_list = [], [], []
 h_list = []
 
 def update_airplane(airplane, x):
@@ -46,11 +46,11 @@ def run_analysis(x):
         63 - airplane['phi_overturn'] * 180 / np.pi,
         0.9 - (airplane['c_tank_c_w'] + airplane['c_flap_c_wing']),
         0.9 - (airplane['c_tank_c_w'] + airplane['c_ail_c_wing']),
-        0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
-        airplane['tank_excess']
+        # 0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
     ]
     
     h = [
+        airplane['tank_excess']
     ]
 
     return f, g, h
@@ -61,7 +61,7 @@ def objfun(xn):
 
     xlist.append(x)
     flist.append(f)
-    g_hist.append(g)
+    g_list.append(g)
     h_list.append(h)
     
     if ENABLE_REALTIME_PLOTS:
@@ -84,6 +84,19 @@ def objfun(xn):
 
         fig_x.canvas.draw()
         fig_x.canvas.flush_events()
+        
+        # === Update constraint subplots ===
+        iterations = range(len(g_list))
+        arrg = np.array(g_list)  # (iters, num_g)
+
+        for i in range(num_g):
+            lines_g[i].set_xdata(iterations)
+            lines_g[i].set_ydata(arrg[:, i])
+            ax_g[i].relim()
+            ax_g[i].autoscale_view()
+
+        fig_g.canvas.draw()
+        fig_g.canvas.flush_events()
     
     return f
 
@@ -111,29 +124,29 @@ VAR_DICT_FILT = {
     'AR_w':             [7, 11],
     'taper_w':          [0.2, 0.4],
     'sweep_w':          [20*np.pi/180, 30*np.pi/180],
-    'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
+    # 'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
     'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
-    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
+    # 'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
     'tcr_w':            [0.12, 0.16],
     'tct_w':            [0.08, 0.11],
     'Cht':              [0.9, 1.15],
-    'Lc_h':             [3, 4.3],
-    'AR_h':             [3.5, 5.5],
-    'taper_h':          [0.3, 0.5],
-    'sweep_h':          [23*np.pi/180, 35*np.pi/180],
-    'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
-    'zr_h':             [0.6, 0.9],
+    # 'Lc_h':             [3, 4.3],
+    # 'AR_h':             [3.5, 5.5],
+    # 'taper_h':          [0.3, 0.5],
+    # 'sweep_h':          [23*np.pi/180, 35*np.pi/180],
+    # 'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
+    # 'zr_h':             [0.6, 0.9],
     # 'tcr_h':            [0.05, 0.15],
     # 'tct_h':            [0.05, 0.15],
     'Cvt':              [0.06, 0.11],
-    'Lb_v':             [0.35, 0.45],
-    'AR_v':             [1, 2],
-    'taper_v':          [0.3, 0.6],
-    'sweep_v':          [30*np.pi/180, 50*np.pi/180],
-    'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
+    # 'Lb_v':             [0.35, 0.45],
+    # 'AR_v':             [1, 2],
+    # 'taper_v':          [0.3, 0.6],
+    # 'sweep_v':          [30*np.pi/180, 50*np.pi/180],
+    # 'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
     'x_n':              [airplane_ref['xr_w'] - 2.5, airplane_ref['xr_w'] + 4],
     'y_n':              list(get_perc_var(airplane_ref['y_n'])),
-    'z_n':              list(get_perc_var(airplane_ref['z_n'])),
+    # 'z_n':              list(get_perc_var(airplane_ref['z_n'])),
     'L_n':              [4, 4.5],
     'D_n':              [1.5, 2.3],
     'x_nlg':            [2.5, 5.5],
@@ -141,13 +154,12 @@ VAR_DICT_FILT = {
     'y_mlg':            [2, 4],
     'z_lg':             [-4, -2],
     'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
-    'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
+    # 'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
     'c_tank_c_w':       [0.45, 0.55],
-    'b_tank_b_w_end':   [0.8, 0.95],
     'c_flap_c_wing':    [0.2, 0.3],
     'b_flap_b_wing':    [0.55, 0.7],
-    'c_ail_c_wing':     [0.2, 0.35],
-    'b_ail_b_wing':     [0.3, 0.4]
+    # 'c_ail_c_wing':     [0.2, 0.35],
+    # 'b_ail_b_wing':     [0.3, 0.4]
 }
 
 VAR_NAMES_FILT = list(VAR_DICT_FILT.keys())
@@ -204,6 +216,26 @@ if ENABLE_REALTIME_PLOTS:
         
     ax_x[-1].set_xlabel('Iteration')
     fig_x.suptitle('Evolution of Selected Variables')
+    plt.tight_layout()
+    plt.show()
+    
+    # === Constraint plots (each constraint in its own subplot) ===
+    num_g = len(run_analysis(denormalize(x0_norm))[1])
+
+    fig_g, ax_g = plt.subplots(num_g, 1, figsize=(6, 2*num_g), sharex=True)
+    if num_g == 1:
+        ax_g = [ax_g]
+
+    lines_g = []
+
+    for i in range(num_g):
+        line, = ax_g[i].plot([], [], '-')
+        lines_g.append(line)
+        ax_g[i].set_ylabel(f"g[{i}]")
+        ax_g[i].axhline(0.0, linestyle='--')  # constraint threshold
+
+    ax_g[-1].set_xlabel('Iteration')
+    fig_g.suptitle('Constraint Evolution')
     plt.tight_layout()
     plt.show()
 

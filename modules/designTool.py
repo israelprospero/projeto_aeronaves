@@ -2049,7 +2049,7 @@ def standard_airplane(name='fokker100'):
                     'tct_w' : 0.096, # t/c of the tip section of the wing
                     
                     'Cht' : 1.01, # Horizontal tail volume coefficient
-                    'Lc_h' : 3.4, # Non-dimensional lever of the horizontal tail (lever/wing_mac)
+                    'Lc_h' : 4.3, # Non-dimensional lever of the horizontal tail (lever/wing_mac)
                     'AR_h' : 4.87, # HT aspect ratio
                     'taper_h' : 0.41, # HT taper ratio
                     'sweep_h' : 28.29*np.pi/180, # HT sweep [rad]
@@ -2060,7 +2060,7 @@ def standard_airplane(name='fokker100'):
                     'eta_h' : 1.0, # Dynamic pressure factor of the HT
                     
                     'Cvt' : 0.069, # Vertical tail volume coefficient
-                    'Lb_v' : 0.42, # Non-dimensional lever of the vertical tail (lever/wing_span)
+                    'Lb_v' : 0.45, # Non-dimensional lever of the vertical tail (lever/wing_span)
                     'AR_v' : 1.38, # VT aspect ratio
                     'taper_v' : 0.44, # VT taper ratio
                     'sweep_v' : 42.54*np.pi/180, # VT sweep [rad]
