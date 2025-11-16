@@ -51,13 +51,13 @@ def run_analysis(x):
         0.85 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
         # airplane['SM_fwd'] - (airplane['SM_aft'] + 20),
         # (airplane['xcg_mlg'] - airplane['xm_w'])/airplane['cm_w'] - ((airplane['xnp'] - airplane['xm_w'])/airplane['cm_w'] + 0.08)
-        0.005 - airplane['tank_excess'],
+        # 0.01 - airplane['tank_excess'],
         
         
     ]
     
     h = [
-        # airplane['tank_excess']
+        airplane['tank_excess']
     ]
     
     global count
