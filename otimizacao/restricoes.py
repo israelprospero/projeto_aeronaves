@@ -18,6 +18,7 @@ def print_dict(airplane):
 with open("airplane_opt.json", "r") as file:
     airplane_opt = json.load(file)
     
+# airplane_opt = dt.analyze(airplane_opt)
 dt.plot3d(airplane_opt)
     
 airplane_opt['b'] = np.sqrt(airplane_opt['AR_w']*airplane_opt['S_w'])

@@ -2069,7 +2069,7 @@ def standard_airplane(name='fokker100'):
                     'tct_v' : 0.1, # t/c of the tip section of the VT
                     
                     'L_f' : 30.85, # Fuselage length [m]
-                    'D_f' : 3.7, # Fuselage diameter [m]
+                    'D_f' : 3.9, # Fuselage diameter [m]
                     
                     'x_n' : 13, # Longitudinal position of the nacelle frontal face [m]
                     'y_n' : 4.4, # Lateral position of the nacelle centerline [m]
