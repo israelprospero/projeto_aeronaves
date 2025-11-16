@@ -7,6 +7,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 import copy
 
+# --- Funções H1, H2, get_a, get_Mach_stall, LD_max ---
 H1 = 10700
 H2 = 10700
 
@@ -47,7 +48,22 @@ def LD_max(airplane, CL_range, M, H, Weight):
     CD_LDmax, _, _ = dt.aerodynamics(airplane, M, H, CL_LDmax, Weight, highlift_config='clean')
     #print(f"(L/D)_max = {LD_max:.2f} at CL = {CL_LDmax:.2f}, CD = {CD_LDmax:.4f}")
 
-def drag_polar(airplane, CL_cruise, num):
+
+# ####################################################################
+# ###               FUNÇÃO drag_polar                  ###
+# ####################################################################
+
+def drag_polar(airplane, CL_cruise, num, save_path=None):
+    """
+    Plota as polares de arrasto para as configurações de cruise, takeoff e landing.
+    
+    Args:
+        airplane (dict): Dicionário da aeronave.
+        CL_cruise (float): CL de cruzeiro para marcar no gráfico.
+        num (int): Número da aeronave para o título.
+        save_path (str, optional): Caminho para salvar o gráfico (ex: "polar.pdf").
+                                   Se None, apenas exibe com plt.show().
+    """
     
     labels = ['Cruise', 'Takeoff', 'Landing']
     
@@ -59,42 +75,64 @@ def drag_polar(airplane, CL_cruise, num):
         {'M': 1.3*Mach_stall_landing, 'H': 0, 'W': 0.85*airplane['W0'],'config': 'landing'}
     ]
     
-    colors = ['blue', 'red', 'green']
-    plt.figure()
-    for label, conf, color in zip(labels, configs, colors):
+    colors = ['#0033A0', '#D40000', '#007A33'] # Cores (Azul, Vermelho, Verde)
+    linestyles = ['-', '--', ':']
+    
+    # --- Início do Plot "Bonito" ---
+    plt.figure(figsize=(10, 7)) # Tamanho maior
+    
+    for label, conf, color, ls in zip(labels, configs, colors, linestyles):
         CL_list = []
         CD_list = []
-        for CL in np.arange(-0.5, 3.0, 0.001):
+        # Usamos um range mais fino para uma curva suave
+        for CL in np.arange(-0.5, 3.0, 0.01): 
             CD, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL,
                                         highlift_config=conf['config'],
                                         n_engines_failed=1 if conf['config']=='takeoff' else 0,
                                         lg_down=1 if conf['config']=='landing' else 0)
             CL_list.append(CL)
-            CD_list.append(CD*1e4)
+            CD_list.append(CD) # Não multiplicamos por 1e4 para manter o eixo em CD
 
         _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, highlift_config=conf['config'])
         
         mask = np.array(CL_list) <= CLmax
-        plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], label=label)
+        plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], 
+                 label=f"Config: {label}", color=color, linestyle=ls, linewidth=2)
         
+        # Ponto de Cruzeiro
         if label == 'Cruise':
-            CD_cruise, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise)
-            CD_cruise = CD_cruise*1e4
-            plt.plot(CD_cruise, CL_cruise, 'ks', label='Cruise Point A1')
+            CD_cruise_val, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise)
+            plt.plot(CD_cruise_val, CL_cruise, 's', color=color, markersize=8,
+                     label=f"Ponto de Cruzeiro (CL={CL_cruise:.3f})")
 
+        # Ponto de CLmax
         CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, highlift_config=conf['config'])
-        plt.plot(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1], 'o', color=color)
-        plt.text(np.array(CD_list)[mask][-1], np.array(CL_list)[mask][-1] + 0.05, f"CLmax {label} = {CLmax:.2f}", color=color, fontsize=14)
+        plt.plot(CD_clmax, CLmax, 'o', color=color, markersize=8)
+        plt.text(CD_clmax + 0.005, CLmax, f"CLmax = {CLmax:.2f}", 
+                 color=color, fontsize=12, va='center')
             
-    plt.xlabel("CD",fontsize=16)
-    plt.ylabel("CL",fontsize=16)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
-    plt.title(f"Airplane {num} - Polar Drag with CLmax")
-    plt.legend(fontsize=14)
-    plt.grid(True)
-    plt.show() 
+    # --- Configurações do Gráfico "Bonito" ---
+    plt.xlabel("Coeficiente de Arrasto (CD)", fontsize=14, fontweight='bold')
+    plt.ylabel("Coeficiente de Sustentação (CL)", fontsize=14, fontweight='bold')
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    #plt.title(f"Aeronave {num} - Polares de Arrasto (CL x CD)", fontsize=16, fontweight='bold')
+    plt.legend(fontsize=12, loc='lower right')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.ylim(bottom=0) # Começa o eixo Y no 0
+    plt.xlim(left=0)   # Começa o eixo X no 0
+    
+    # --- LÓGICA PARA SALVAR EM PDF ---
+    plt.tight_layout() # Ajusta para não cortar os labels
+    
+    if save_path:
+        plt.savefig(save_path, format='pdf', bbox_inches='tight', dpi=300)
+        print(f"--- Gráfico das polares salvo em: {save_path} ---")
+        plt.close() # Fecha a figura após salvar
+    else:
+        plt.show() # Mostra o gráfico se não for salvar
         
+
 def plot_CD_x_M(M_range, H, CL, airplane, W, num):
     
     CD_list = []
@@ -187,19 +225,7 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
         W0_list.append(W0)
         Wempty_list.append(W_empty)
         Wfuel_list.append(W_fuel)
-    
-    # print(ar_w_list)
-    # print(W0_list)
-    # plt.figure()
-    # plt.plot(ar_w_list, W0_list)
-    # plt.xlabel('AR_w',fontsize=14)
-    # plt.ylabel('W0',fontsize=14)
-    # plt.xticks(fontsize=14)
-    # plt.yticks(fontsize=14)
-    # plt.title(f'Airplane {num} - W0 x AR_w')
-    # plt.grid(True)
-    # plt.show()
-    
+
     plt.figure(figsize=(10, 6))
     plt.plot(ar_w_list, W0_list, color='navy', linewidth=2, label='W0')
     plt.plot(ar_w_list, Wempty_list, linewidth=2, label='W_empty')
@@ -214,29 +240,10 @@ def plot_W0_x_ar_w(ar_w_range, airplane, num):
     plt.tight_layout()
     plt.show()
     
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
-    # plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
-    # plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
-    # # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
-    # plt.xticks(fontsize=14)
-    # plt.yticks(fontsize=14)
-    # plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
-    # plt.tight_layout()
-    # plt.show()
-
 
 def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=None):
     """
     Plota as curvas de empuxo requerido vs área alar para diferentes condições.
-
-    Args:
-        airplane (dict): dicionário com dados da aeronave
-        Swvec (list/np.array): vetor de áreas alares
-        W0_guess (float): peso estimado da aeronave [N]
-        T0_guess (float): empuxo estimado da aeronave [N]
-        op_point (tuple or None): ponto de operação (Sw, T0) para destacar no gráfico.
-        savepath (str or None): caminho para salvar a figura. Default = None
     """
     
     airplane_copy = copy.deepcopy(airplane)
@@ -253,201 +260,36 @@ def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=No
         deltaS_landing_last = airplane_copy.get('deltaS_wlan', None)
 
     names = [
-        "T0_takeoff",
-        "T0_cruise",
-        "T0_FAR25.111",
-        "T0_FAR25.121a",
-        "T0_FAR25.121b",
-        "T0_FAR25.121c",
-        "T0_FAR25.119",
-        "T0_FAR25.121d"
+        "T0_takeoff", "T0_cruise", "T0_FAR25.111", "T0_FAR25.121a",
+        "T0_FAR25.121b", "T0_FAR25.121c", "T0_FAR25.119", "T0_FAR25.121d"
     ]
 
-    # -------- Estilo acadêmico --------
     plt.rcParams.update({
-        "font.size": 12,
-        "axes.grid": True,
-        "grid.alpha": 0.25,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
+        "font.size": 12, "axes.grid": True, "grid.alpha": 0.25,
+        "axes.spines.top": False, "axes.spines.right": False,
     })
 
     fig, ax = plt.subplots(figsize=(8, 5.2))
     T0plot = np.array(T0plot)
 
-    # Curvas
     for i, name in enumerate(names):
         ax.plot(Swvec, T0plot[:, i], linewidth=2, label=name)
 
-    # Linha vertical de pouso
     if deltaS_landing_last is not None:
         ax.axvline(x=deltaS_landing_last, color="tab:red", linestyle="--",
                    linewidth=1.8, label="Landing")
 
-    # Eixos
-    ax.set_xlabel(r"$S_w$  [m$^2$]")
-    ax.set_ylabel(r"$T_0$  [N]")
-
-    # Legenda
-    ax.legend(ncol=2, frameon=False, fontsize=10, loc="best")
-
-    # -------- Ponto de operação opcional --------
-    if op_point is not None:
-        S_op, T_op = op_point
-
-        # marcador elegante (círculo com contorno)
-        ax.scatter([S_op], [T_op], s=120, marker="o", facecolor="white",
-                   edgecolor="black", linewidths=1.8, zorder=5)
-        ax.scatter([S_op], [T_op], s=28, marker="o", color="black", zorder=6)
-
-        # projeções tracejadas
-        ax.axhline(y=T_op, linestyle=":", linewidth=1.5, color="gray")
-        ax.axvline(x=S_op, linestyle=":", linewidth=1.5, color="gray")
-
-        # anotação
-        ax.annotate(f"({S_op:.0f} m², {T_op:,.0f} N)",
-                    xy=(S_op, T_op), xytext=(12, 14), textcoords="offset points",
-                    fontsize=20,
-                    arrowprops=dict(arrowstyle="->", linewidth=1.0, color="black"),
-                    bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="black", alpha=0.7))
-
-    fig.tight_layout()
-    if savepath:
-        fig.savefig(savepath, dpi=300, bbox_inches="tight")
-    plt.show()
-
-def plot_W0_x_ar_w(ar_w_range, airplane, num):
-    
-    ar_w_list = []
-    W0_list = []
-    Wempty_list = []
-    Wfuel_list = []
-    
-    for k in ar_w_range:
-        airplane['AR_w'] = k
-        dt.geometry(airplane) # chama a função geometry para atualizar  geometria do avião com o novo ar_w antes de chamar a função 'W0'
-        ar_w_list.append(k)   
-        
-        W0, W_empty, W_fuel, _ = dt.weight(airplane['W0_guess'], airplane['T0_guess'], airplane) #calcula o weight para cada alongamento (ar_w)
-        W0_list.append(W0)
-        Wempty_list.append(W_empty)
-        Wfuel_list.append(W_fuel)
-    
-    # print(ar_w_list)
-    # print(W0_list)
-    # plt.figure()
-    # plt.plot(ar_w_list, W0_list)
-    # plt.xlabel('AR_w',fontsize=14)
-    # plt.ylabel('W0',fontsize=14)
-    # plt.xticks(fontsize=14)
-    # plt.yticks(fontsize=14)
-    # plt.title(f'Airplane {num} - W0 x AR_w')
-    # plt.grid(True)
-    # plt.show()
-    
-    plt.figure(figsize=(10, 6))
-    plt.plot(ar_w_list, W0_list, color='navy', linewidth=2, label='W0')
-    plt.plot(ar_w_list, Wempty_list, linewidth=2, label='W_empty')
-    plt.plot(ar_w_list, Wfuel_list, linewidth=2, label='W_fuel')
-    plt.legend()
-    plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
-    plt.ylabel('Weights [N]', fontsize=16, fontweight='bold')
-    # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
-    plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
-    plt.tight_layout()
-    plt.show()
-    
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(ar_w_list, W0_list, color='navy', linewidth=2)
-    # plt.xlabel('Wing Aspect Ratio (AR_w)', fontsize=16, fontweight='bold')
-    # plt.ylabel('Takeoff Weight (W0) [N]', fontsize=16, fontweight='bold')
-    # # plt.title(f'Airplane {num} — W0 vs. AR_w', fontsize=18, fontweight='bold')
-    # plt.xticks(fontsize=14)
-    # plt.yticks(fontsize=14)
-    # plt.grid(True, linestyle='--', linewidth=0.7, alpha=0.7)
-    # plt.tight_layout()
-    # plt.show()
-
-
-def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=None):
-    """
-    Plota as curvas de empuxo requerido vs área alar para diferentes condições.
-
-    Args:
-        airplane (dict): dicionário com dados da aeronave
-        Swvec (list/np.array): vetor de áreas alares
-        W0_guess (float): peso estimado da aeronave [N]
-        T0_guess (float): empuxo estimado da aeronave [N]
-        op_point (tuple or None): ponto de operação (Sw, T0) para destacar no gráfico.
-        savepath (str or None): caminho para salvar a figura. Default = None
-    """
-
-    T0plot = []
-    deltaS_landing_last = None
-
-    for Sw in Swvec:
-        airplane['S_w'] = float(Sw)
-        dt.geometry(airplane)
-
-        dt.thrust_matching(W0_guess, T0_guess, airplane)
-        T0plot.append(airplane['T0vec'])
-        deltaS_landing_last = airplane.get('deltaS_wlan', None)
-
-    names = [
-        "T0_takeoff",
-        "T0_cruise",
-        "T0_FAR25.111",
-        "T0_FAR25.121a",
-        "T0_FAR25.121b",
-        "T0_FAR25.121c",
-        "T0_FAR25.119",
-        "T0_FAR25.121d"
-    ]
-
-    # -------- Estilo acadêmico --------
-    plt.rcParams.update({
-        "font.size": 12,
-        "axes.grid": True,
-        "grid.alpha": 0.25,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-    })
-
-    fig, ax = plt.subplots(figsize=(8, 5.2))
-    T0plot = np.array(T0plot)
-
-    # Curvas
-    for i, name in enumerate(names):
-        ax.plot(Swvec, T0plot[:, i], linewidth=2, label=name)
-
-    # Linha vertical de pouso
-    if deltaS_landing_last is not None:
-        ax.axvline(x=deltaS_landing_last, color="tab:red", linestyle="--",
-                   linewidth=1.8, label="Landing")
-
-    # Eixos
     ax.set_xlabel(r"$S_w$  [m$^2$]",fontsize=16)
     ax.set_ylabel(r"$T_0$  [N]",fontsize=16)
-
-    # Legenda
     ax.legend(ncol=2, frameon=False, fontsize=14, loc="best")
 
-    # -------- Ponto de operação opcional --------
     if op_point is not None:
         S_op, T_op = op_point
-
-        # marcador elegante (círculo com contorno)
         ax.scatter([S_op], [T_op], s=120, marker="o", facecolor="white",
                    edgecolor="black", linewidths=1.8, zorder=5)
         ax.scatter([S_op], [T_op], s=28, marker="o", color="black", zorder=6)
-
-        # projeções tracejadas
         ax.axhline(y=T_op, linestyle=":", linewidth=1.5, color="gray")
         ax.axvline(x=S_op, linestyle=":", linewidth=1.5, color="gray")
-
-        # anotação
         ax.annotate(f"({S_op:.0f} m², {T_op:,.0f} N)",
                     xy=(S_op, T_op), xytext=(12, 14), textcoords="offset points",
                     fontsize=11,
@@ -456,8 +298,18 @@ def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=No
 
     fig.tight_layout()
     if savepath:
-        fig.savefig(savepath, dpi=300, bbox_inches="tight")
-    plt.show()
+        # Salva em PDF se savepath for fornecido
+        if savepath.endswith('.pdf'):
+            fig.savefig(savepath, dpi=300, bbox_inches="tight", format='pdf')
+            print(f"--- Gráfico T0xSw salvo em: {savepath} ---")
+        else:
+            fig.savefig(savepath, dpi=300, bbox_inches="tight")
+            print(f"--- Gráfico T0xSw salvo em: {savepath} ---")
+        plt.close(fig)
+    else:
+        plt.show()
+
+# --- Funções plot_W0_x_Sw e plot_W0_x_sweep (sem mudanças) ---
 
 def plot_W0_x_Sw(airplane, Swvec, sweep_wing_v, flap_type_v, W0_guess, T0_guess):
     # Lista para armazenar resultados
@@ -594,4 +446,3 @@ def plot_W0_x_sweep(airplane, Swvec, sweep_wing_v, W0_guess, T0_guess):
     plt.show()
 
     return df
-
