@@ -13,11 +13,12 @@ import otimizacao.estabilidade as estab
 import json
 import matplotlib.pyplot as plt
 
-ENABLE_REALTIME_PLOTS = True 
+ENABLE_REALTIME_PLOTS = False 
 
 airplane_base = dt.standard_airplane('my_airplane_1')
 xlist, flist, g_list = [], [], []
 h_list = []
+count = 0
 
 def update_airplane(airplane, x):
     for key, val in zip(VAR_DICT_FILT, x):
@@ -29,7 +30,7 @@ def run_analysis(x):
     airplane = update_airplane(copy.deepcopy(airplane_base), x)
     dt.analyze(airplane, print_log=False, plot=False)
     
-    airplane = aero.analise_aerodinamica(airplane, show_results=False)
+    # airplane = aero.analise_aerodinamica(airplane, show_results=False)
 
     f = airplane['W0']
 
@@ -38,20 +39,30 @@ def run_analysis(x):
         airplane['deltaS_wlan'],
         0.4 - airplane['SM_fwd'],
         airplane['SM_aft'] - 0.05,
+        0.12 - airplane['SM_aft'],
         0.75 - airplane['CLv'],
         0.15 - airplane['frac_nlg_fwd'],
         airplane['frac_nlg_aft'] - 0.04,
         airplane['alpha_tipback'] * 180 / np.pi - 15,
         airplane['alpha_tailstrike'] * 180 / np.pi - 10,
         63 - airplane['phi_overturn'] * 180 / np.pi,
-        0.9 - (airplane['c_tank_c_w'] + airplane['c_flap_c_wing']),
-        0.9 - (airplane['c_tank_c_w'] + airplane['c_ail_c_wing']),
-        # 0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
+        (1 - airplane['x_tank_c_w']) - (airplane['c_tank_c_w'] + airplane['c_flap_c_wing']),
+        (1 - airplane['x_tank_c_w']) - (airplane['c_tank_c_w'] + airplane['c_ail_c_wing']),
+        0.85 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']),
+        # airplane['SM_fwd'] - (airplane['SM_aft'] + 20),
+        # (airplane['xcg_mlg'] - airplane['xm_w'])/airplane['cm_w'] - ((airplane['xnp'] - airplane['xm_w'])/airplane['cm_w'] + 0.08)
+        0.005 - airplane['tank_excess'],
+        
+        
     ]
     
     h = [
-        airplane['tank_excess']
+        # airplane['tank_excess']
     ]
+    
+    global count
+    count += 1
+    print(f'Running Analysis ({count})')
 
     return f, g, h
 
@@ -121,16 +132,16 @@ def get_perc_var(val):
 airplane_ref = dt.standard_airplane('my_airplane_1')
 VAR_DICT_FILT = {
     'S_w':              [70, 110],
-    'AR_w':             [7, 11],
+    # 'AR_w':             [7, 11],
     'taper_w':          [0.2, 0.4],
     'sweep_w':          [20*np.pi/180, 30*np.pi/180],
     # 'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
-    'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
-    # 'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
+    'xr_w':             [10.6, 12],
+    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
     'tcr_w':            [0.12, 0.16],
     'tct_w':            [0.08, 0.11],
-    'Cht':              [0.9, 1.15],
-    # 'Lc_h':             [3, 4.3],
+    # 'Cht':              [0.9, 1.15],
+    'Lc_h':             [3, 4.7],
     # 'AR_h':             [3.5, 5.5],
     # 'taper_h':          [0.3, 0.5],
     # 'sweep_h':          [23*np.pi/180, 35*np.pi/180],
@@ -138,28 +149,28 @@ VAR_DICT_FILT = {
     # 'zr_h':             [0.6, 0.9],
     # 'tcr_h':            [0.05, 0.15],
     # 'tct_h':            [0.05, 0.15],
-    'Cvt':              [0.06, 0.11],
-    # 'Lb_v':             [0.35, 0.45],
+    # 'Cvt':              [0.06, 0.11],
+    'Lb_v':             [0.35, 0.51],
     # 'AR_v':             [1, 2],
     # 'taper_v':          [0.3, 0.6],
     # 'sweep_v':          [30*np.pi/180, 50*np.pi/180],
     # 'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
-    'x_n':              [airplane_ref['xr_w'] - 2.5, airplane_ref['xr_w'] + 4],
-    'y_n':              list(get_perc_var(airplane_ref['y_n'])),
-    # 'z_n':              list(get_perc_var(airplane_ref['z_n'])),
-    'L_n':              [4, 4.5],
-    'D_n':              [1.5, 2.3],
-    'x_nlg':            [2.5, 5.5],
-    'x_mlg':            [airplane_ref['xr_w'] + 1.7, airplane_ref['xr_w'] + 3.9],
+    'x_n':              [8.7, 14],
+    'y_n':              [3, 5],
+    'z_n':              list(get_perc_var(airplane_ref['z_n'])),
+    # 'L_n':              [4, 4.5],
+    # 'D_n':              [1.5, 2.3],
+    'x_nlg':            [3, 5.5],
+    'x_mlg':            [12.41, 15],
     'y_mlg':            [2, 4],
-    'z_lg':             [-4, -2],
+    # 'z_lg':             [-4, -2],
     'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
-    # 'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
+    'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
     'c_tank_c_w':       [0.45, 0.55],
     'c_flap_c_wing':    [0.2, 0.3],
     'b_flap_b_wing':    [0.55, 0.7],
-    # 'c_ail_c_wing':     [0.2, 0.35],
-    # 'b_ail_b_wing':     [0.3, 0.4]
+    'c_ail_c_wing':     [0.2, 0.35],
+    'b_ail_b_wing':     [0.3, 0.4]
 }
 
 VAR_NAMES_FILT = list(VAR_DICT_FILT.keys())
@@ -185,7 +196,6 @@ cons = [con_ineq, con_eq]
 if ENABLE_REALTIME_PLOTS:
     VARS_TO_TRACK = [
         'S_w',
-        'AR_w',
     ]
 
     plt.ion()
@@ -247,30 +257,18 @@ xopt = denormalize(xopt_norm)
 
 airplane_opt = update_airplane(copy.deepcopy(airplane_base), xopt)
 airplane_opt = dt.analyze(airplane_opt, print_log=False, plot=False)
-dt.plot3d(airplane_opt)
+# dt.plot3d(airplane_opt)
 
 airplane_base = dt.analyze(airplane_base, print_log=False, plot=False)
 
 # Print each key comparison
-all_keys = sorted(set(airplane_base) | set(airplane_opt))
-for key in all_keys:
-    val1 = airplane_base.get(key, '—')
-    val2 = airplane_opt.get(key, '—')
-    print(f"{key}: {val1}\t {val2}")
+# all_keys = sorted(set(airplane_base) | set(airplane_opt))
+# for key in all_keys:
+#     val1 = airplane_base.get(key, '—')
+#     val2 = airplane_opt.get(key, '—')
+#     print(f"{key}: {val1}\t {val2}")
     
 with open("airplane_opt.json", "w") as file:
     json.dump(airplane_opt, file, indent=4)
 
-# input('ENTER para analise aerodinamica')
-# airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=False)
-
-# input('ENTER para analise de pesos')
-# pesos.analise_pesos(airplane_opt)
-
-# input('ENTER para analise de desempenho')
-# desemp.analise_desempenho(airplane_opt)
-
-# input('ENTER para analise de estabilidade')
-# estab.analise_estabilidade(airplane_opt)
-
-input()
+# input()

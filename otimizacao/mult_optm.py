@@ -22,34 +22,34 @@ def get_perc_var(val):
 
 airplane_ref = dt.standard_airplane('my_airplane_1')
 VAR_DICT_FILT = {
-    'S_w':              [70, 105],
+    'S_w':              [70, 110],
     'AR_w':             [7, 11],
     'taper_w':          [0.2, 0.4],
     'sweep_w':          [20*np.pi/180, 30*np.pi/180],
-    'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
+    # 'dihedral_w':       [2*np.pi/180, 6.5*np.pi/180],
     'xr_w':             list(get_perc_var(airplane_ref['xr_w'])),
-    'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
-    'tcr_w':            list(get_perc_var(airplane_ref['tcr_w'])),
-    'tct_w':            list(get_perc_var(airplane_ref['tct_w'])),
+    # 'zr_w':             list(get_perc_var(airplane_ref['zr_w'])),
+    'tcr_w':            [0.12, 0.16],
+    'tct_w':            [0.08, 0.11],
     'Cht':              [0.9, 1.15],
-    'Lc_h':             [3, 5.5],
-    'AR_h':             [3.5, 5.5],
-    'taper_h':          [0.3, 0.5],
-    'sweep_h':          [23*np.pi/180, 35*np.pi/180],
-    'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
-    'zr_h':             [0.6, 0.9],
-    'tcr_h':            [0.05, 0.15],
-    'tct_h':            [0.05, 0.15],
+    # 'Lc_h':             [3, 4.3],
+    # 'AR_h':             [3.5, 5.5],
+    # 'taper_h':          [0.3, 0.5],
+    # 'sweep_h':          [23*np.pi/180, 35*np.pi/180],
+    # 'dihedral_h':       [3*np.pi/180, 10*np.pi/180],
+    # 'zr_h':             [0.6, 0.9],
+    # 'tcr_h':            [0.05, 0.15],
+    # 'tct_h':            [0.05, 0.15],
     'Cvt':              [0.06, 0.11],
-    'Lb_v':             [0.35, 0.65],
-    'AR_v':             [1, 2],
-    'taper_v':          [0.3, 0.6],
-    'sweep_v':          [30*np.pi/180, 50*np.pi/180],
-    'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
-    'x_n':              [airplane_ref['xr_w'] - 3, airplane_ref['xr_w'] + 4],
+    # 'Lb_v':             [0.35, 0.45],
+    # 'AR_v':             [1, 2],
+    # 'taper_v':          [0.3, 0.6],
+    # 'sweep_v':          [30*np.pi/180, 50*np.pi/180],
+    # 'zr_v':             list(get_perc_var(airplane_ref['zr_v'])),
+    'x_n':              [airplane_ref['xr_w'] - 2.5, airplane_ref['xr_w'] + 4],
     'y_n':              list(get_perc_var(airplane_ref['y_n'])),
     'z_n':              list(get_perc_var(airplane_ref['z_n'])),
-    'L_n':              [3, 4.5],
+    'L_n':              [4, 4.5],
     'D_n':              [1.5, 2.3],
     'x_nlg':            [2.5, 5.5],
     'x_mlg':            [airplane_ref['xr_w'] + 1.7, airplane_ref['xr_w'] + 3.9],
@@ -57,12 +57,11 @@ VAR_DICT_FILT = {
     'z_lg':             [-4, -2],
     'x_tailstrike':     list(get_perc_var(airplane_ref['x_tailstrike'])),
     'z_tailstrike':     list(get_perc_var(airplane_ref['z_tailstrike'])),
-    'c_tank_c_w':       list(get_perc_var(airplane_ref['c_tank_c_w'])),
-    'b_tank_b_w_end':   list(get_perc_var(airplane_ref['b_tank_b_w_end'])),
-    'c_flap_c_wing':    list(get_perc_var(airplane_ref['c_flap_c_wing'])),
-    'b_flap_b_wing':    list(get_perc_var(airplane_ref['b_flap_b_wing'])),
-    'c_ail_c_wing':     list(get_perc_var(airplane_ref['c_ail_c_wing'])),
-    'b_ail_b_wing':     list(get_perc_var(airplane_ref['b_ail_b_wing']))
+    'c_tank_c_w':       [0.45, 0.55],
+    'c_flap_c_wing':    [0.2, 0.3],
+    'b_flap_b_wing':    [0.55, 0.7],
+    'c_ail_c_wing':     [0.2, 0.35],
+    'b_ail_b_wing':     [0.3, 0.4]
 }
 
 pprint(VAR_DICT_FILT)
@@ -115,7 +114,7 @@ class AirplaneMOO(ElementwiseProblem):
         F1 = airplane['W0']
         F2 = -airplane['aero_CD_cruise']
 
-        # default is ≤ 0
+        # default is <= 0
         g = [
             - (airplane['deltaS_wlan']),
             - (0.4 - airplane['SM_fwd']),
@@ -131,10 +130,9 @@ class AirplaneMOO(ElementwiseProblem):
             - (0.8 - (airplane['b_flap_b_wing'] + airplane['b_ail_b_wing']))
         ]
 
-        # Equality constraints converted to |h| ≤ tolerance
+        # Equality constraints converted to |h| <= tolerance
         h = [
             airplane['tank_excess'],
-            airplane['xnp'] - 0.45
         ]
         tol = 1e-4
         h_as_ineq = [abs(val) - tol for val in h]

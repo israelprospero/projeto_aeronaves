@@ -5,6 +5,7 @@ from tabulate import tabulate
 import pandas as pd
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+import copy
 
 H1 = 10700
 H2 = 10700
@@ -237,17 +238,19 @@ def plot_T0_x_Sw(airplane, Swvec, W0_guess, T0_guess, op_point=None, savepath=No
         op_point (tuple or None): ponto de operação (Sw, T0) para destacar no gráfico.
         savepath (str or None): caminho para salvar a figura. Default = None
     """
+    
+    airplane_copy = copy.deepcopy(airplane)
 
     T0plot = []
     deltaS_landing_last = None
 
     for Sw in Swvec:
-        airplane['S_w'] = float(Sw)
-        dt.geometry(airplane)
+        airplane_copy['S_w'] = float(Sw)
+        dt.geometry(airplane_copy)
 
-        dt.thrust_matching(W0_guess, T0_guess, airplane)
-        T0plot.append(airplane['T0vec'])
-        deltaS_landing_last = airplane.get('deltaS_wlan', None)
+        dt.thrust_matching(W0_guess, T0_guess, airplane_copy)
+        T0plot.append(airplane_copy['T0vec'])
+        deltaS_landing_last = airplane_copy.get('deltaS_wlan', None)
 
     names = [
         "T0_takeoff",

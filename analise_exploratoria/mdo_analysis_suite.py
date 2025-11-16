@@ -115,13 +115,15 @@ MASTER_DOE_BOUNDS = {
 MASTER_OAT_INPUTS = list(MASTER_DOE_BOUNDS.keys())
 
 MASTER_OUTPUTS = [
-    'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
-    'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
+    # 'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
+    # 'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
+    'frac_nlg_fwd', 'frac_nlg_aft'
 ]
 
 MASTER_PAIRGRID_SUBSET = [
-    'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
-    'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
+    # 'W0', 'W_empty', 'W_fuel', 'T0', 'DOC', 'deltaS_wlan', 'tank_excess',
+    # 'CLv', 'SM_fwd', 'SM_aft', 'alpha_tipback', 'alpha_tailstrike', 'phi_overturn'
+    'frac_nlg_fwd', 'frac_nlg_aft'
 ]
 
 # =============================================================================

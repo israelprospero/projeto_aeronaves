@@ -2039,7 +2039,7 @@ def standard_airplane(name='fokker100'):
                     'name': 'my_airplane_1',
                     
                     'S_w' : 85, # Wing area [m2]
-                    'AR_w' : 9.57,  # Wing aspect ratio
+                    'AR_w' : 11,  # Wing aspect ratio
                     'taper_w' : 0.27, # Wing taper ratio
                     'sweep_w' : 25.1*np.pi/180, # Wing sweep [rad]
                     'dihedral_w' : 4.1*np.pi/180, # Wing dihedral [rad]
@@ -2074,8 +2074,8 @@ def standard_airplane(name='fokker100'):
                     'x_n' : 13, # Longitudinal position of the nacelle frontal face [m]
                     'y_n' : 4.4, # Lateral position of the nacelle centerline [m]
                     'z_n' : -2.35, # Vertical position of the nacelle centerline [m]
-                    'L_n' : 4.91, # Nacelle length [m]
-                    'D_n' : 1.69, # Nacelle diameter [m]
+                    'L_n' : 2.8, # Nacelle length [m]
+                    'D_n' : 1.85, # Nacelle diameter [m]
                     
                     'n_engines' : 2, # Number of engines
                     'n_engines_under_wing' : 2, # Number of engines installed under the wing
@@ -2087,7 +2087,7 @@ def standard_airplane(name='fokker100'):
                     
                     'x_nlg' : 4.11, # Longitudinal position of the nose landing gear [m]
                     'x_mlg' : 15.85, # Longitudinal position of the main landing gear [m]
-                    'y_mlg' : 2.47, # Lateral position of the main landing gear [m]
+                    'y_mlg' : 2.7, # Lateral position of the main landing gear [m]
                     'z_lg' : -3.5, # Vertical position of the landing gear [m]
                     'x_tailstrike' : 23.71, # Longitudinal position of critical tailstrike point [m]
                     'z_tailstrike' : -0.92, # Vertical position of critical tailstrike point [m]

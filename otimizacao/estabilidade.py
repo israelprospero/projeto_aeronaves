@@ -1,4 +1,5 @@
 def analise_estabilidade(airplane):
+    
     print(f"airplane['cm_w'] = {airplane['cm_w']}")
     print(f"airplane['xm_w'] = {airplane['xm_w']}")
     print("airplane['xnp'] = ",airplane['xnp'])
