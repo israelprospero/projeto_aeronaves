@@ -809,7 +809,7 @@ def empty_weight(W0_guess, T0_guess, airplane):
 
 #----------------------------------------
 
-def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
+def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False, update_dict=True):
 
     # Unpacking dictionary
     S_w = airplane['S_w']
@@ -872,21 +872,22 @@ def fuel_weight(W0_guess, airplane, range_cruise, update_Mf_hist=False):
     W_trapped_fuel = W_fuel - W_used_fuel
     Mf_trapped = 1 - W_trapped_fuel / W0_guess
 
-    # Store Mfs
-    airplane.update({
-        'Mf_engine_start': Mf_start,
-        'Mf_taxi': Mf_taxi,
-        'Mf_takeoff': Mf_takeoff,
-        'Mf_climb': Mf_climb,
-        'Mf_cruise': Mf_cruise,
-        'Mf_loiter': Mf_loiter,
-        'Mf_descent': Mf_descent,
-        'Mf_altcruise': Mf_altcruise,
-        'Mf_landing': Mf_landing,
-        'Mf_total': Mf,
-        'Mf_trapped': Mf_trapped,
-        'fuel_trapped': W_trapped_fuel / gravity
-    })
+    if update_dict:
+        # Store Mfs
+        airplane.update({
+            'Mf_engine_start': Mf_start,
+            'Mf_taxi': Mf_taxi,
+            'Mf_takeoff': Mf_takeoff,
+            'Mf_climb': Mf_climb,
+            'Mf_cruise': Mf_cruise,
+            'Mf_loiter': Mf_loiter,
+            'Mf_descent': Mf_descent,
+            'Mf_altcruise': Mf_altcruise,
+            'Mf_landing': Mf_landing,
+            'Mf_total': Mf,
+            'Mf_trapped': Mf_trapped,
+            'fuel_trapped': W_trapped_fuel / gravity
+        })
 
     return W_fuel, W_cruise, CL_cruise, CD_cruise, C_cruise, L_D_max, C_loiter, CL_alt, CD_alt, C_altcruise
 
@@ -1432,7 +1433,7 @@ def doc(airplane, CEF=6.0, plot=False):
     rho_fuel = airplane['rho_fuel']
 
     # Estimate block fuel
-    W_fuel, _, _, _, _, _, _, _, _, _ = fuel_weight(W0, airplane, range_cruise=Rbl)
+    W_fuel, _, _, _, _, _, _, _, _, _ = fuel_weight(W0, airplane, range_cruise=Rbl, update_dict=False)
     
     # UNIT CONVERSIONS
     
