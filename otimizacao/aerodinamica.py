@@ -42,7 +42,7 @@ def analise_aerodinamica(airplane, airplane_original=None, show_results=True):
     LD_cruise = CL_cruise / CD_cruise
 
     # ------ CL - Landing ------ #
-    MLW = airplane['MLW_frac']*airplane['W0'] 
+    MLW = airplane['MLW_frac']*airplane['W0']
     H_landing = 0 
 
     M_stall_landing, CLmax_landing = m.get_Mach_stall(airplane, MLW, 'landing', H_landing)
