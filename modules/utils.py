@@ -56,13 +56,6 @@ def LD_max(airplane, CL_range, M, H, Weight):
 def drag_polar(airplane, CL_cruise, num, save_path=None):
     """
     Plota as polares de arrasto para as configurações de cruise, takeoff e landing.
-    
-    Args:
-        airplane (dict): Dicionário da aeronave.
-        CL_cruise (float): CL de cruzeiro para marcar no gráfico.
-        num (int): Número da aeronave para o título.
-        save_path (str, optional): Caminho para salvar o gráfico (ex: "polar.pdf").
-                                   Se None, apenas exibe com plt.show().
     """
     
     labels = ['Cruise', 'Takeoff', 'Landing']
@@ -78,20 +71,22 @@ def drag_polar(airplane, CL_cruise, num, save_path=None):
     colors = ['#0033A0', '#D40000', '#007A33'] # Cores (Azul, Vermelho, Verde)
     linestyles = ['-', '--', ':']
     
-    # --- Início do Plot "Bonito" ---
-    plt.figure(figsize=(10, 7)) # Tamanho maior
+    plt.figure(figsize=(10, 7))
     
     for label, conf, color, ls in zip(labels, configs, colors, linestyles):
         CL_list = []
         CD_list = []
-        # Usamos um range mais fino para uma curva suave
+        
+        n_engines_failed = 1 if conf['config'] == 'takeoff' else 0
+        lg_down = 1 if conf['config'] == 'landing' else 0
+        
         for CL in np.arange(-0.5, 3.0, 0.01): 
             CD, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL,
-                                        highlift_config=conf['config'],
-                                        n_engines_failed=1 if conf['config']=='takeoff' else 0,
-                                        lg_down=1 if conf['config']=='landing' else 0)
+                                       highlift_config=conf['config'],
+                                       n_engines_failed=n_engines_failed,
+                                       lg_down=lg_down)
             CL_list.append(CL)
-            CD_list.append(CD) # Não multiplicamos por 1e4 para manter o eixo em CD
+            CD_list.append(CD)
 
         _, CLmax, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], 0.5, highlift_config=conf['config'])
         
@@ -99,19 +94,26 @@ def drag_polar(airplane, CL_cruise, num, save_path=None):
         plt.plot(np.array(CD_list)[mask], np.array(CL_list)[mask], 
                  label=f"Config: {label}", color=color, linestyle=ls, linewidth=2)
         
-        # Ponto de Cruzeiro
+        # --- Ponto de Cruzeiro ---
         if label == 'Cruise':
-            CD_cruise_val, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise)
-            plt.plot(CD_cruise_val, CL_cruise, 's', color=color, markersize=8,
-                     label=f"Ponto de Cruzeiro (CL={CL_cruise:.3f})")
+            CD_cruise_val, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CL_cruise, highlift_config='clean')
+            # CORREÇÃO 2: Removemos o 'label=' para sair da legenda
+            plt.plot(CD_cruise_val, CL_cruise, 's', color=color, markersize=8)
+            # CORREÇÃO 3: Adicionamos o texto no gráfico
+            plt.text(CD_cruise_val + 0.005, CL_cruise, f"Cruise (CL={CL_cruise:.2f})", 
+                     color=color, fontsize=12, va='center')
 
-        # Ponto de CLmax
-        CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, highlift_config=conf['config'])
+        # --- Ponto de CLmax ---
+        CD_clmax, _, _ = dt.aerodynamics(airplane, conf['M'], conf['H'], CLmax, 
+                                         highlift_config=conf['config'],
+                                         n_engines_failed=n_engines_failed,
+                                         lg_down=lg_down)
+                                         
         plt.plot(CD_clmax, CLmax, 'o', color=color, markersize=8)
         plt.text(CD_clmax + 0.005, CLmax, f"CLmax = {CLmax:.2f}", 
                  color=color, fontsize=12, va='center')
             
-    # --- Configurações do Gráfico "Bonito" ---
+    # --- Configurações do Gráfico ---
     plt.xlabel("Coeficiente de Arrasto (CD)", fontsize=14, fontweight='bold')
     plt.ylabel("Coeficiente de Sustentação (CL)", fontsize=14, fontweight='bold')
     plt.xticks(fontsize=12)
@@ -119,18 +121,17 @@ def drag_polar(airplane, CL_cruise, num, save_path=None):
     #plt.title(f"Aeronave {num} - Polares de Arrasto (CL x CD)", fontsize=16, fontweight='bold')
     plt.legend(fontsize=12, loc='lower right')
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.ylim(bottom=0) # Começa o eixo Y no 0
-    plt.xlim(left=0)   # Começa o eixo X no 0
+    plt.ylim(bottom=0) 
+    plt.xlim(left=0) 
     
-    # --- LÓGICA PARA SALVAR EM PDF ---
-    plt.tight_layout() # Ajusta para não cortar os labels
+    plt.tight_layout()
     
     if save_path:
         plt.savefig(save_path, format='pdf', bbox_inches='tight', dpi=300)
         print(f"--- Gráfico das polares salvo em: {save_path} ---")
-        plt.close() # Fecha a figura após salvar
+        plt.close() 
     else:
-        plt.show() # Mostra o gráfico se não for salvar
+        plt.show()
         
 
 def plot_CD_x_M(M_range, H, CL, airplane, W, num):

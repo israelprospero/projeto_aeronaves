@@ -22,7 +22,7 @@ dt.plot3d(airplane_opt)
 
 airplane_opt['b'] = np.sqrt(airplane_opt['AR_w']*airplane_opt['S_w'])
 
-airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=False)
+airplane_opt = aero.analise_aerodinamica(airplane_opt, show_results=True)
 
 # print_dict(airplane_opt)
 
