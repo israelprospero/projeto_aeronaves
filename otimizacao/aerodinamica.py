@@ -69,8 +69,14 @@ def analise_aerodinamica(airplane, show_results=True):
         # Drag Polar
         nome_do_pdf = "drag_polar.pdf"
         path_save = os.path.join(script_dir, nome_do_pdf)
-        m.drag_polar(airplane, CL_cruise, '1', save_path=path_save)
-        # TODO: checar funcao
+        comp_dict = dt.standard_airplane(name='fokker100')
+        dt.analyze(fokker_dict, print_log=False, plot=False)
+        m.drag_polar(airplane, 
+             CL_cruise, 
+             1,
+             save_path=path_save, 
+             airplane_comp=comp_dict,
+             label_comp='Fokker 100')
 
     ## Aerodynamic Efficiency (LD)
 
